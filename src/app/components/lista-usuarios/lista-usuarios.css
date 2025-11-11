@@ -3,10 +3,23 @@
   }
   
   .header {
+    margin-bottom: 20px;
+  }
+  
+  .header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .header-info {
+    text-align: center;
+    padding: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    font-weight: 500;
+    color: #495057;
   }
   
   .filtros {
@@ -83,6 +96,11 @@
     color: white;
   }
   
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+  
   .btn-edit {
     background: #ffc107;
     color: #212529;
@@ -148,4 +166,9 @@
   
   .loading {
     color: #007bff;
+  }
+  
+  .no-data {
+    color: #6c757d;
+    font-style: italic;
   }

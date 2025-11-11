@@ -1,9 +1,17 @@
 <div class="container">
     <div class="header">
-      <h2>Gestión de Usuarios</h2>
-      <button class="btn btn-primary" routerLink="/usuarios/nuevo">
-        <i class="fas fa-plus"></i> Nuevo Usuario
-      </button>
+      <div class="header-top">
+        <button class="btn btn-secondary" routerLink="/dashboard">
+          Volver al Menú Principal
+        </button>
+        <h2>Gestión de Usuarios</h2>
+        <button class="btn btn-primary" routerLink="/usuarios/nuevo">
+          Nuevo Usuario
+        </button>
+      </div>
+      <div class="header-info">
+        <p>Total de usuarios: {{ usuariosFiltrados.length }}</p>
+      </div>
     </div>
   
     <!-- Filtros -->
@@ -38,7 +46,7 @@
       <table class="table">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>#</th>
             <th>Nombre</th>
             <th>Usuario</th>
             <th>Rol</th>
@@ -48,8 +56,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let usuario of usuariosFiltrados">
-            <td>{{ usuario.id }}</td>
+          <tr *ngFor="let usuario of usuariosFiltrados; let i = index">
+            <td>{{ i + 1 }}</td>
             <td>{{ usuario.nombre }}</td>
             <td>{{ usuario.nombreUsuario }}</td>
             <td>
@@ -61,15 +69,13 @@
             <td>{{ usuario.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</td>
             <td class="actions">
               <button class="btn btn-edit" [routerLink]="['/usuarios/editar', usuario.id]">
-                <i class="fas fa-edit"></i> Editar
+                Editar
               </button>
               <button class="btn btn-status" (click)="cambiarEstadoUsuario(usuario)">
-                <i class="fas" [class.fa-toggle-on]="usuario.estado === 'ACTIVO'" 
-                   [class.fa-toggle-off]="usuario.estado === 'INACTIVO'"></i>
                 {{ usuario.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}
               </button>
               <button class="btn btn-delete" (click)="eliminarUsuario(usuario.id)">
-                <i class="fas fa-trash"></i> Eliminar
+                Eliminar
               </button>
             </td>
           </tr>

@@ -1,51 +1,59 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { LoginRequest, AuthResponse, Usuario } from '../interfaces/auth';
+import { Observable, tap } from 'rxjs';
+
+export interface AuthResponse {
+  token: string;
+  usuario: {
+    id: number;
+    nombre: string;
+    username: string;
+    rol: string;
+  };
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private http = inject(HttpClient);
+  initializeAuthState() {
+    throw new Error('Method not implemented.');
+  }
   private apiUrl = 'http://localhost:8080/api/auth';
-  
-  private tokenSubject = new BehaviorSubject<string | null>(this.getTokenFromStorage());
-  public token$ = this.tokenSubject.asObservable();
-  
-  private usuarioSubject = new BehaviorSubject<any>(null);
-  public usuario$ = this.usuarioSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(
         tap(response => {
-          this.saveToken(response.token);
-          this.saveUsuario(response.usuario);
+          // Guardar token en localStorage
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('currentUser', JSON.stringify(response.usuario));
         })
       );
   }
 
-  register(usuario: Usuario): Observable<any> {
+  register(usuario: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, usuario);
   }
 
-  private saveToken(token: string): void {
-    localStorage.setItem('authToken', token);
-    this.tokenSubject.next(token);
+  logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
   }
 
-  private saveUsuario(usuario: any): void {
-    localStorage.setItem('currentUser', JSON.stringify(usuario));
-    this.usuarioSubject.next(usuario);
-  }
-
-  private getTokenFromStorage(): string | null {
-    return localStorage.getItem('authToken');
+  isLoggedIn(): boolean {
+    return !!localStorage.getItem('token');
   }
 
   getToken(): string | null {
-    return this.tokenSubject.value;
+    return localStorage.getItem('token');
   }
 
   getCurrentUser(): any {
@@ -53,31 +61,12 @@ export class AuthService {
     return user ? JSON.parse(user) : null;
   }
 
-  isLoggedIn(): boolean {
-    return !!this.getToken();
-  }
-
   hasRole(role: string): boolean {
     const user = this.getCurrentUser();
     return user && user.rol === role;
   }
 
-  logout(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    this.tokenSubject.next(null);
-    this.usuarioSubject.next(null);
-  }
-
-  initializeAuthState(): void {
-    const token = this.getTokenFromStorage();
-    const user = this.getCurrentUser();
-    
-    if (token && user) {
-      this.tokenSubject.next(token);
-      this.usuarioSubject.next(user);
-    }
+  isAdmin(): boolean {
+    return this.hasRole('ADMIN');
   }
 }
-
-export type { LoginRequest };

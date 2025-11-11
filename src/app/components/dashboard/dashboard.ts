@@ -23,7 +23,7 @@ export class DashboardComponent implements OnInit {
       this.router.navigate(['/login']);
     }
     
-    this.productosCount = 13; // Temporal
+    this.productosCount = 12; // Temporal
   }
 
   logout() {

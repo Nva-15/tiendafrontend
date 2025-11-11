@@ -1,4 +1,3 @@
-
 export interface Usuario {
     id?: number;
     nombre: string;
@@ -16,12 +15,4 @@ export interface Usuario {
     rol: string;
     estado: string;
     fechaCreacion: string;
-  }
-  
-  export interface UsuarioForm {
-    nombre: string;
-    nombreUsuario: string;
-    password?: string;
-    rol: string;
-    estado: string;
   }

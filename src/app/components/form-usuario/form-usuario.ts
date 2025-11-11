@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { UsuarioService } from '../../services/usuarios';
-import { Usuario, UsuarioForm } from '../../interfaces/usuario';
+import { AuthService } from '../../services/auth';
+import { Usuario } from '../../interfaces/usuario';
 
 @Component({
   selector: 'app-form-usuario',
@@ -32,6 +34,7 @@ export class FormUsuarioComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private usuarioService: UsuarioService,
+    private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -39,18 +42,39 @@ export class FormUsuarioComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('Inicializando formulario de usuario...');
+    this.verificarPermisos();
+
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEdit = true;
         this.usuarioId = +params['id'];
+        console.log('Modo edición para usuario ID:', this.usuarioId);
         this.cargarUsuario(this.usuarioId);
+      } else {
+        console.log('Modo creación de nuevo usuario');
       }
     });
 
-    // Suscribirse a cambios en el campo password para actualizar las validaciones visuales
+    // Suscribirse a cambios en el campo password
     this.passwordControl?.valueChanges.subscribe(value => {
       this.updatePasswordValidations(value);
     });
+  }
+
+  verificarPermisos(): void {
+    const token = this.authService.getToken();
+    const user = this.authService.getCurrentUser();
+    
+    console.log('Token:', token ? 'Presente' : 'Ausente');
+    console.log('Usuario:', user);
+    console.log('Rol:', user?.rol);
+    console.log('Es ADMIN?:', this.authService.isAdmin());
+
+    if (!this.authService.isAdmin()) {
+      this.error = 'No tienes permisos de ADMIN para gestionar usuarios';
+      console.error('Usuario no tiene permisos de ADMIN');
+    }
   }
 
   createForm(): FormGroup {
@@ -108,6 +132,7 @@ export class FormUsuarioComponent implements OnInit {
     this.loading = true;
     this.usuarioService.getUsuarioById(id).subscribe({
       next: (usuario) => {
+        console.log('Usuario cargado:', usuario);
         this.usuarioForm.patchValue({
           nombre: usuario.nombre,
           nombreUsuario: usuario.nombreUsuario,
@@ -132,66 +157,97 @@ export class FormUsuarioComponent implements OnInit {
 
         this.loading = false;
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         this.error = 'Error al cargar el usuario';
         this.loading = false;
-        console.error('Error:', error);
+        console.error('Error cargando usuario:', error);
       }
     });
   }
 
   onSubmit(): void {
+    console.log('Enviando formulario...');
+
+    if (!this.authService.isAdmin()) {
+      this.error = 'No tienes permisos de ADMIN para realizar esta acción';
+      return;
+    }
+
     if (this.usuarioForm.valid) {
       this.loading = true;
+      this.error = '';
       
+      // Para nuevos usuarios, la contraseña es obligatoria
+      if (!this.isEdit && (!this.usuarioForm.value.password || this.usuarioForm.value.password.trim() === '')) {
+        this.error = 'La contraseña es requerida para nuevos usuarios';
+        this.loading = false;
+        return;
+      }
+
       // Crear objeto para enviar al backend
-      const usuarioData: UsuarioForm = {
+      const usuarioData: Usuario = {
         nombre: this.usuarioForm.value.nombre,
         nombreUsuario: this.usuarioForm.value.nombreUsuario,
         rol: this.usuarioForm.value.rol,
         estado: this.usuarioForm.value.estado
       };
 
-      // Solo incluir password si se proporcionó una nueva
-      if (this.usuarioForm.value.password && this.usuarioForm.value.password !== '') {
-        usuarioData.password = this.usuarioForm.value.password;
+      // Solo incluir password si se proporcionó y no está vacía
+      const password = this.usuarioForm.value.password;
+      if (password && password.trim() !== '') {
+        usuarioData.password = password;
       }
 
+      console.log('Datos a enviar:', usuarioData);
+
       if (this.isEdit && this.usuarioId) {
+        console.log('Actualizando usuario ID:', this.usuarioId);
         this.usuarioService.updateUsuario(this.usuarioId, usuarioData).subscribe({
-          next: () => {
+          next: (response) => {
+            console.log('Usuario actualizado:', response);
+            this.loading = false;
             this.router.navigate(['/usuarios']);
           },
-          error: (error) => {
+          error: (error: HttpErrorResponse) => {
             this.handleError(error, 'actualizar');
           }
         });
       } else {
+        console.log('Creando nuevo usuario');
         this.usuarioService.createUsuario(usuarioData).subscribe({
-          next: () => {
+          next: (response) => {
+            console.log('Usuario creado:', response);
+            this.loading = false;
             this.router.navigate(['/usuarios']);
           },
-          error: (error) => {
+          error: (error: HttpErrorResponse) => {
             this.handleError(error, 'crear');
           }
         });
       }
     } else {
+      console.log('Formulario inválido');
       this.marcarCamposComoTocados();
     }
   }
 
-  private handleError(error: any, action: string): void {
+  private handleError(error: HttpErrorResponse, action: string): void {
     this.loading = false;
+    console.error(`Error al ${action} usuario:`, error);
     
-    if (error.status === 400 && error.error?.error?.includes('nombre de usuario')) {
+    if (error.status === 403) {
+      this.error = 'ERROR 403: Acceso denegado. Verifica tu autenticación.';
+    } else if (error.status === 401) {
+      this.error = 'No estás autenticado. Inicia sesión nuevamente.';
+      this.router.navigate(['/login']);
+    } else if (error.status === 400 && error.error?.error?.includes('nombre de usuario')) {
       this.error = 'El nombre de usuario ya existe';
       this.usuarioForm.get('nombreUsuario')?.setErrors({ 'duplicate': true });
+    } else if (error.status === 400) {
+      this.error = error.error?.error || 'Datos inválidos';
     } else {
-      this.error = `Error al ${action} el usuario`;
+      this.error = `Error al ${action} el usuario: ${error.message || 'Error desconocido'}`;
     }
-    
-    console.error('Error:', error);
   }
 
   private marcarCamposComoTocados(): void {
@@ -201,7 +257,7 @@ export class FormUsuarioComponent implements OnInit {
     });
   }
 
-  // Getters para facilitar el acceso en el template
+  // Getters para el template
   get nombreControl() { return this.usuarioForm.get('nombre'); }
   get nombreUsuarioControl() { return this.usuarioForm.get('nombreUsuario'); }
   get passwordControl() { return this.usuarioForm.get('password'); }

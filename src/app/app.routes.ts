@@ -54,8 +54,7 @@ export const routes: Routes = [
     component: FormUsuarioComponent,
     canActivate: [authGuard],
     data: { roles: ['ADMIN'] }
-  },
-  
+  },  
   { 
     path: '', 
     redirectTo: '/login', 

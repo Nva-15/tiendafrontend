@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { UsuarioService } from '../../services/usuarios';
-import { UsuarioForm, UsuarioResponse } from '../../interfaces/usuario';
-
+import { UsuarioResponse } from '../../interfaces/usuario';
 
 @Component({
   selector: 'app-lista-usuarios',
@@ -74,7 +73,7 @@ export class ListaUsuariosComponent implements OnInit {
 
   cambiarEstadoUsuario(usuario: UsuarioResponse): void {
     const nuevoEstado = usuario.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    const usuarioActualizado: UsuarioForm = { 
+    const usuarioActualizado = { 
       nombre: usuario.nombre,
       nombreUsuario: usuario.nombreUsuario,
       rol: usuario.rol,
