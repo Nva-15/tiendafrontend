@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { CategoriasService } from '../../services/categorias';
-import { ProductosService } from '../../services/productos'; // Importar servicio de productos
+import { ProductosService } from '../../services/productos'; 
 
 @Component({
   selector: 'app-dashboard',
