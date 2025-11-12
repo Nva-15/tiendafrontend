@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { CategoriasService } from '../../services/categorias';
-import { ProductosService } from '../../services/productos'; 
+import { ProductosService } from '../../services/productos';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,11 +14,11 @@ import { ProductosService } from '../../services/productos';
 export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private categoriasService = inject(CategoriasService);
-  private productosService = inject(ProductosService); 
+  private productosService = inject(ProductosService);
   private router = inject(Router);
 
   currentUser: any;
-  productosCount: number = 0; 
+  productosCount: number = 0;
   categoriasCount: number = 0;
 
   ngOnInit() {
@@ -28,7 +28,7 @@ export class DashboardComponent implements OnInit {
       this.router.navigate(['/login']);
     }
     
-    this.cargarConteoProductos(); 
+    this.cargarConteoProductos();
     this.cargarConteoCategorias();
   }
 

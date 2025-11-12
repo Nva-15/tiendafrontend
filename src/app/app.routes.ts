@@ -8,6 +8,7 @@ import { ListaUsuariosComponent } from './components/lista-usuarios/lista-usuari
 import { FormUsuarioComponent } from './components/form-usuario/form-usuario';
 import { ListaCategoriasComponent } from './components/lista-categorias/lista-categorias';
 import { FormCategoriaComponent } from './components/form-categoria/form-categoria';
+import { AyudaComponent } from './components/ayuda/ayuda';
 
 export const routes: Routes = [
   { 
@@ -73,6 +74,12 @@ export const routes: Routes = [
     path: 'categorias/editar/:id', 
     component: FormCategoriaComponent, 
     title: 'Editar Categoría',
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'ayuda', 
+    component: AyudaComponent, 
+    title: 'Ayuda y Soporte',
     canActivate: [authGuard]
   },
   { 
