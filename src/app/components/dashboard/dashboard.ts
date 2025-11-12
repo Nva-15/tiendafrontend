@@ -2,6 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
+import { CategoriasService } from '../../services/categorias';
+import { ProductosService } from '../../services/productos'; // Importar servicio de productos
 
 @Component({
   selector: 'app-dashboard',
@@ -11,10 +13,13 @@ import { AuthService } from '../../services/auth';
 })
 export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);
+  private categoriasService = inject(CategoriasService);
+  private productosService = inject(ProductosService); 
   private router = inject(Router);
 
   currentUser: any;
-  productosCount: number = 0;
+  productosCount: number = 0; 
+  categoriasCount: number = 0;
 
   ngOnInit() {
     this.currentUser = this.authService.getCurrentUser();
@@ -23,7 +28,32 @@ export class DashboardComponent implements OnInit {
       this.router.navigate(['/login']);
     }
     
-    this.productosCount = 12; // Temporal
+    this.cargarConteoProductos(); 
+    this.cargarConteoCategorias();
+  }
+
+  cargarConteoProductos() {
+    this.productosService.getProductos().subscribe({
+      next: (productos) => {
+        this.productosCount = productos.length;
+      },
+      error: (error) => {
+        console.error('Error cargando productos:', error);
+        this.productosCount = 0;
+      }
+    });
+  }
+
+  cargarConteoCategorias() {
+    this.categoriasService.getCategorias().subscribe({
+      next: (categorias) => {
+        this.categoriasCount = categorias.length;
+      },
+      error: (error) => {
+        console.error('Error cargando categorías:', error);
+        this.categoriasCount = 0;
+      }
+    });
   }
 
   logout() {

@@ -6,6 +6,8 @@ import { ListaProductosComponent } from './components/lista-productos/lista-prod
 import { FormProductoComponent } from './components/form-producto/form-producto';
 import { ListaUsuariosComponent } from './components/lista-usuarios/lista-usuarios';
 import { FormUsuarioComponent } from './components/form-usuario/form-usuario';
+import { ListaCategoriasComponent } from './components/lista-categorias/lista-categorias';
+import { FormCategoriaComponent } from './components/form-categoria/form-categoria';
 
 export const routes: Routes = [
   { 
@@ -54,7 +56,25 @@ export const routes: Routes = [
     component: FormUsuarioComponent,
     canActivate: [authGuard],
     data: { roles: ['ADMIN'] }
-  },  
+  },
+  { 
+    path: 'categorias', 
+    component: ListaCategoriasComponent, 
+    title: 'Categorías',
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'categorias/nuevo', 
+    component: FormCategoriaComponent, 
+    title: 'Nueva Categoría',
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'categorias/editar/:id', 
+    component: FormCategoriaComponent, 
+    title: 'Editar Categoría',
+    canActivate: [authGuard]
+  },
   { 
     path: '', 
     redirectTo: '/login', 

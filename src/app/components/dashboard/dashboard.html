@@ -53,6 +53,19 @@
             </div>
           </div>
         </div>
+        <!-- Tarjeta de Categorías -->
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm border-0 cursor-pointer" routerLink="/categorias">
+          <div class="card-body text-center p-4">
+            <div class="bg-info bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+              <i class="bi bi-tags text-info fs-1"></i>
+            </div>
+            <h5 class="card-title">Categorías</h5>
+            <p class="card-text text-muted small">Gestionar categorías de productos</p>
+            <span class="badge bg-info">{{ categoriasCount }}</span>
+          </div>
+        </div>
+      </div>
   
         <div class="col-md-3" *ngIf="isAdmin()">
           <div class="card h-100 shadow-sm border-0 cursor-pointer" routerLink="/usuarios">

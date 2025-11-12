@@ -21,4 +21,27 @@ export class CategoriasService {
   getCategoriaById(id: number): Observable<Categoria> {
     return this.http.get<Categoria>(`${this.apiUrl}/${id}`);
   }
+
+  createCategoria(categoria: Categoria): Observable<Categoria> {
+    return this.http.post<Categoria>(this.apiUrl, categoria);
+  }
+
+  updateCategoria(id: number, categoria: Categoria): Observable<Categoria> {
+    return this.http.put<Categoria>(`${this.apiUrl}/${id}`, categoria);
+  }
+
+  deleteCategoria(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  // método para verificar si existe una categoría con el mismo nombre
+  verificarCategoriaExistente(nombre: string, categoriaId?: number): Observable<boolean> {
+    let params: any = { nombre };
+    
+    if (categoriaId) {
+      params.categoriaId = categoriaId.toString();
+    }
+    
+    return this.http.get<boolean>(`${this.apiUrl}/verificar`, { params });
+  }
 }
