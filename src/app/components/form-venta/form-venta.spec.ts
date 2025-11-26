@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FormVenta } from './form-venta';
+import { FormVentaComponent } from './form-venta';
 
 describe('FormVenta', () => {
-  let component: FormVenta;
-  let fixture: ComponentFixture<FormVenta>;
+  let component: FormVentaComponent;
+  let fixture: ComponentFixture<FormVentaComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FormVenta]
+      imports: [FormVentaComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(FormVenta);
+    fixture = TestBed.createComponent(FormVentaComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

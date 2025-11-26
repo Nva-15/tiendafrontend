@@ -1,1 +1,464 @@
-<p>form-venta works!</p>
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+      <i class="bi bi-cart-plus me-2"></i>
+      Nueva Venta
+    </h2>
+    <button class="btn btn-outline-secondary" routerLink="/ventas">
+      <i class="bi bi-arrow-left me-2"></i>
+      Volver a Ventas
+    </button>
+  </div>
+
+  <!-- DEBUG - Temporal --> <!--
+  <div class="alert alert-info small mb-3">
+    <strong>DEBUG Detallado:</strong>
+    <div><strong>Productos cargados:</strong> {{ productos.length }}</div>
+    <div><strong>Cliente:</strong> {{ clienteExistente ? 'Existente' : (mostrarFormCliente ? 'Nuevo' : 'No seleccionado') }}</div>
+    <div><strong>Detalles agregados:</strong> {{ detalles.length }}</div>
+    <div><strong>Formulario válido:</strong> {{ esFormularioValido() }}</div>
+    <div><strong>Detalles completos:</strong> {{ tieneDetallesCompletos() }}</div>
+    <div><strong>Stock válido:</strong> {{ validarStock() }}</div>
+    
+    <div class="mt-2" *ngIf="detalles.length > 0">
+      <strong>Detalles actuales:</strong>
+      <div *ngFor="let detalle of detalles.controls; let i = index" class="small">
+        Detalle {{i}}: 
+        ProductoID={{detalle.get('productoId')?.value}}, 
+        Producto={{getProductoNombre(detalle.get('productoId')?.value)}},
+        Stock={{getStockProducto(detalle.get('productoId')?.value)}}
+      </div>
+    </div>
+  </div> -->
+
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- Tarjeta de Información del Cliente -->
+      <div class="card">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="bi bi-person me-2"></i>
+            Información del Cliente
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Mensajes -->
+          <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {{ errorMessage }}
+            <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+          </div>
+
+          <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            {{ successMessage }}
+            <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+          </div>
+
+          <!-- Búsqueda de cliente por DNI -->
+          <div class="row mb-4">
+            <div class="col-md-8">
+              <label class="form-label">Buscar Cliente por DNI</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="dniBusqueda"
+                  placeholder="Ingrese DNI del cliente"
+                  maxlength="8"
+                  (keyup.enter)="buscarCliente()">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="buscarCliente()"
+                  [disabled]="isBuscandoCliente || !dniBusqueda || dniBusqueda.length !== 8">
+                  <span *ngIf="isBuscandoCliente" class="spinner-border spinner-border-sm me-2"></span>
+                  <i *ngIf="!isBuscandoCliente" class="bi bi-search me-2"></i>
+                  {{ isBuscandoCliente ? 'Buscando...' : 'Buscar' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="limpiarBusquedaCliente()">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </div>
+              <div class="form-text">
+                Ingrese el DNI del cliente (8 dígitos) y presione Buscar o Enter
+              </div>
+            </div>
+          </div>
+
+          <!-- Información del cliente -->
+          <div *ngIf="clienteExistente || mostrarFormCliente" class="border rounded p-3 bg-light">
+            <h6 class="mb-3">
+              <i class="bi bi-person-badge me-2"></i>
+              {{ clienteExistente ? 'Cliente Encontrado' : 'Registrar Nuevo Cliente' }}
+            </h6>
+            
+            <form [formGroup]="ventaForm">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Nombre Completo *</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [class.is-invalid]="clienteNombre?.invalid && clienteNombre?.touched"
+                    formControlName="clienteNombre"
+                    [readonly]="!!clienteExistente"
+                    placeholder="Nombre del cliente">
+                  <div *ngIf="clienteNombre?.invalid && clienteNombre?.touched" class="invalid-feedback">
+                    El nombre del cliente es requerido
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">DNI *</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [class.is-invalid]="clienteDni?.invalid && clienteDni?.touched"
+                    formControlName="clienteDni"
+                    [readonly]="!!clienteExistente"
+                    placeholder="DNI del cliente"
+                    maxlength="8">
+                  <div *ngIf="clienteDni?.invalid && clienteDni?.touched" class="invalid-feedback">
+                    <span *ngIf="clienteDni?.errors?.['required']">El DNI es requerido</span>
+                    <span *ngIf="clienteDni?.errors?.['minlength'] || clienteDni?.errors?.['maxlength']">El DNI debe tener 8 dígitos</span>
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Correo Electrónico</label>
+                  <input
+                    type="email"
+                    class="form-control"
+                    [class.is-invalid]="clienteCorreo?.invalid && clienteCorreo?.touched"
+                    formControlName="clienteCorreo"
+                    [readonly]="!!clienteExistente"
+                    placeholder="correo@ejemplo.com">
+                  <div *ngIf="clienteCorreo?.invalid && clienteCorreo?.touched" class="invalid-feedback">
+                    <span *ngIf="clienteCorreo?.errors?.['email']">Formato de correo inválido</span>
+                  </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Teléfono</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [class.is-invalid]="clienteTelefono?.invalid && clienteTelefono?.touched"
+                    formControlName="clienteTelefono"
+                    [readonly]="!!clienteExistente"
+                    placeholder="987654321"
+                    maxlength="9">
+                  <div *ngIf="clienteTelefono?.invalid && clienteTelefono?.touched" class="invalid-feedback">
+                    <span *ngIf="clienteTelefono?.errors?.['minlength'] || clienteTelefono?.errors?.['maxlength']">El teléfono debe tener 9 dígitos</span>
+                    <span *ngIf="clienteTelefono?.errors?.['pattern']">Solo se permiten números</span>
+                  </div>
+                  <div class="form-text">Ejemplo: 987654321 (9 dígitos)</div>
+                </div>
+
+                <div class="col-12 mb-3">
+                  <label class="form-label">Dirección</label>
+                  <textarea
+                    class="form-control"
+                    formControlName="clienteDireccion"
+                    [readonly]="!!clienteExistente"
+                    rows="2"
+                    placeholder="Dirección del cliente"></textarea>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de la venta -->
+      <div class="card mt-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="bi bi-cart me-2"></i>
+            Detalles de la Venta
+          </h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="ventaForm">
+            <!-- Método de pago -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="tipoPago" class="form-label">Método de Pago *</label>
+                <select
+                  class="form-select"
+                  [class.is-invalid]="tipoPago?.invalid && tipoPago?.touched"
+                  id="tipoPago"
+                  formControlName="tipoPago">
+                  <option *ngFor="let tipo of tiposPago" [value]="tipo">
+                    {{ tipo }}
+                  </option>
+                </select>
+                <div *ngIf="tipoPago?.invalid && tipoPago?.touched" class="invalid-feedback">
+                  Debe seleccionar un método de pago
+                </div>
+              </div>
+            </div>
+
+            <!-- Filtro de productos -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Filtrar por Categoría</label>
+                <select class="form-select" (change)="filtrarProductosPorCategoria($event)">
+                  <option value="">Todas las categorías</option>
+                  <option *ngFor="let categoria of categorias" [value]="categoria.id">
+                    {{ categoria.nombre }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-6 d-flex align-items-end">
+                <button 
+                  type="button" 
+                  class="btn btn-success w-100" 
+                  (click)="agregarDetalle()"
+                  [disabled]="!(clienteExistente || mostrarFormCliente)">
+                  <i class="bi bi-plus-circle me-2"></i>
+                  Agregar Producto
+                </button>
+              </div>
+            </div>
+
+            <!-- Lista de productos -->
+            <div formArrayName="detalles">
+              <div *ngFor="let detalle of detalles.controls; let i = index" class="detalle-venta mb-3 p-3 border rounded">
+                <div [formGroupName]="i" class="row align-items-center">
+                  <div class="col-md-4">
+                    <label class="form-label">Producto *</label>
+                    <select
+                      class="form-select"
+                      [class.is-invalid]="detalle.get('productoId')?.invalid && detalle.get('productoId')?.touched"
+                      formControlName="productoId">
+                      <option value="">Seleccionar producto</option>
+                      <option *ngFor="let producto of productosFiltrados" [value]="producto.id"
+                              [disabled]="producto.cantidad <= 0">
+                        {{ producto.nombre }} - S/. {{ producto.precioVenta | number:'1.2-2' }} (Stock: {{ producto.cantidad }})
+                      </option>
+                    </select>
+                    <div *ngIf="detalle.get('productoId')?.invalid && detalle.get('productoId')?.touched" class="invalid-feedback">
+                      Debe seleccionar un producto
+                    </div>
+                  </div>
+
+                  <div class="col-md-2">
+                    <label class="form-label">Cantidad *</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      [class.is-invalid]="detalle.get('cantidad')?.invalid && detalle.get('cantidad')?.touched"
+                      formControlName="cantidad"
+                      min="1"
+                      [max]="getStockProducto(detalle.get('productoId')?.value)">
+                    <div *ngIf="detalle.get('cantidad')?.invalid && detalle.get('cantidad')?.touched" class="invalid-feedback">
+                      <span *ngIf="detalle.get('cantidad')?.errors?.['required']">Cantidad requerida</span>
+                      <span *ngIf="detalle.get('cantidad')?.errors?.['min']">Mínimo 1 unidad</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-2">
+                    <label class="form-label">Precio Unit. *</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      [class.is-invalid]="detalle.get('precioUnitario')?.invalid && detalle.get('precioUnitario')?.touched"
+                      formControlName="precioUnitario"
+                      step="0.01"
+                      min="0.01">
+                    <div *ngIf="detalle.get('precioUnitario')?.invalid && detalle.get('precioUnitario')?.touched" class="invalid-feedback">
+                      <span *ngIf="detalle.get('precioUnitario')?.errors?.['required']">Precio requerido</span>
+                      <span *ngIf="detalle.get('precioUnitario')?.errors?.['min']">Mínimo S/. 0.01</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-2">
+                    <label class="form-label">Subtotal</label>
+                    <input
+                      type="text"
+                      class="form-control bg-light"
+                      formControlName="subtotal"
+                      readonly>
+                  </div>
+
+                  <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger w-100"
+                      (click)="eliminarDetalle(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Mensaje de stock -->
+                <div *ngIf="detalle.get('productoId')?.value" class="mt-2">
+                  <small class="text-muted">
+                    Stock disponible: {{ getStockProducto(detalle.get('productoId')?.value) }} unidades
+                  </small>
+                  <small *ngIf="detalle.get('cantidad')?.value > getStockProducto(detalle.get('productoId')?.value)" 
+                         class="text-danger ms-2">
+                    <i class="bi bi-exclamation-triangle"></i> Stock insuficiente
+                  </small>
+                </div>
+
+                <!-- Información del producto seleccionado -->
+                <div *ngIf="detalle.get('productoId')?.value" class="mt-1">
+                  <small class="text-info">
+                    <i class="bi bi-info-circle me-1"></i>
+                    {{ getProductoNombre(detalle.get('productoId')?.value) }}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <!-- Mensaje cuando no hay productos -->
+          <div *ngIf="detalles.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-cart-x display-4 d-block mb-2"></i>
+            <p>No hay productos agregados a la venta</p>
+            <p class="small" *ngIf="!clienteExistente && !mostrarFormCliente">
+              Primero busque o registre un cliente para agregar productos
+            </p>
+            <p class="small" *ngIf="clienteExistente || mostrarFormCliente">
+              Haga clic en "Agregar Producto" para comenzar
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen de venta -->
+    <div class="col-lg-4">
+      <div class="card sticky-top">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-receipt me-2"></i>
+            Resumen de Venta
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Productos seleccionados -->
+          <div *ngIf="detalles.length > 0" class="mb-3">
+            <h6 class="mb-3">
+              <i class="bi bi-list-check me-2"></i>
+              Productos Seleccionados
+            </h6>
+            <div class="productos-lista" style="max-height: 200px; overflow-y: auto;">
+              <div *ngFor="let detalle of detalles.controls; let i = index" 
+                   class="producto-item border-bottom pb-2 mb-2">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <strong class="d-block small">{{ getProductoNombre(detalle.get('productoId')?.value) }}</strong>
+                    <small class="text-muted">
+                      {{ detalle.get('cantidad')?.value }} x S/. {{ detalle.get('precioUnitario')?.value | number:'1.2-2' }}
+                    </small>
+                  </div>
+                  <strong class="text-success small">
+                    S/. {{ detalle.get('subtotal')?.value | number:'1.2-2' }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold">Productos:</span>
+              <span class="badge bg-secondary">{{ detalles.length }}</span>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-2">
+              <span>Subtotal:</span>
+              <strong>S/. {{ getTotalVenta() | number:'1.2-2' }}</strong>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-2">
+              <span>IGV (18%):</span>
+              <strong>S/. {{ getIGV() | number:'1.2-2' }}</strong>
+            </div>
+            
+            <hr>
+            
+            <div class="d-flex justify-content-between mb-3">
+              <span class="h5">Total:</span>
+              <strong class="h5 text-primary">S/. {{ getTotalConIGV() | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <!-- Información del cliente -->
+          <div *ngIf="clienteExistente || mostrarFormCliente" class="mb-3 p-2 bg-light rounded">
+            <h6 class="mb-2">
+              <i class="bi bi-person me-1"></i>
+              Cliente
+            </h6>
+            <small class="d-block">
+              <strong>Nombre:</strong> {{ getClienteNombre() }}
+            </small>
+            <small class="d-block">
+              <strong>DNI:</strong> {{ getClienteDni() }}
+            </small>
+            <small *ngIf="clienteExistente" class="text-success">
+              <i class="bi bi-check-circle me-1"></i>Cliente registrado
+            </small>
+            <small *ngIf="!clienteExistente && mostrarFormCliente" class="text-warning">
+              <i class="bi bi-info-circle me-1"></i>Nuevo cliente
+            </small>
+          </div>
+
+          <!-- Método de pago -->
+          <div *ngIf="tipoPago?.value" class="mb-3 p-2 bg-light rounded">
+            <h6 class="mb-2">
+              <i class="bi bi-credit-card me-1"></i>
+              Método de Pago
+            </h6>
+            <small class="d-block">
+              <strong>Tipo:</strong> {{ tipoPago?.value }}
+            </small>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-success w-100 btn-lg"
+            (click)="onSubmit()"
+            [disabled]="!esFormularioValido() || isLoading">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isLoading" class="bi bi-credit-card me-2"></i>
+            {{ isLoading ? 'Procesando...' : 'Realizar Venta' }}
+          </button>
+
+          <div class="mt-3">
+            <small class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Revise que todos los datos sean correctos antes de confirmar la venta.
+            </small>
+          </div>
+
+          <!-- Validaciones del formulario -->
+          <div *ngIf="!esFormularioValido()" class="mt-3">
+            <div class="alert alert-warning small">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              <strong>Validaciones pendientes:</strong>
+              <ul class="mb-0 mt-1">
+                <li *ngIf="!clienteExistente && !mostrarFormCliente">• Busque o registre un cliente</li>
+                <li *ngIf="clienteNombre?.invalid">• Complete el nombre del cliente</li>
+                <li *ngIf="clienteDni?.invalid">• Complete el DNI del cliente (8 dígitos)</li>
+                <li *ngIf="clienteCorreo?.invalid">• Formato de correo inválido</li>
+                <li *ngIf="clienteTelefono?.invalid">• Teléfono debe tener 9 dígitos</li>
+                <li *ngIf="detalles.length === 0">• Agregue al menos un producto</li>
+                <li *ngIf="detalles.length > 0 && !tieneDetallesCompletos()">• Complete todos los productos correctamente</li>
+                <li *ngIf="!validarStock()">• Verifique el stock de los productos</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

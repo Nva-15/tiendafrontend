@@ -47,7 +47,7 @@ export class ProductosService {
   getProductosPorCategoria(categoriaId: number): Observable<Producto[]> {
     return this.http.get<Producto[]>(`${this.apiUrl}/categoria/${categoriaId}`);
   }
-  // Nuevo método para verificar si existe un producto con el mismo nombre en la misma categoría
+  // verificar si existe un producto con el mismo nombre en la misma categoría
   verificarProductoExistente(nombre: string, categoriaId: number, productoId?: number): Observable<boolean> {
     return this.http.get<boolean>(`${this.apiUrl}/verificar`, {
       params: { 

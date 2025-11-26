@@ -34,7 +34,7 @@ export class CategoriasService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
-  // método para verificar si existe una categoría con el mismo nombre
+  // verificar si existe una categoría con el mismo nombre
   verificarCategoriaExistente(nombre: string, categoriaId?: number): Observable<boolean> {
     let params: any = { nombre };
     

@@ -41,6 +41,33 @@
 
     <!-- Cards de Navegación -->
     <div class="row g-4">
+      <!-- VENTAS - PRIMERA OPCIÓN -->
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm border-0 cursor-pointer" routerLink="/ventas/nueva">
+          <div class="card-body text-center p-4">
+            <div class="bg-success bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+              <i class="bi bi-cash-coin text-success fs-1"></i>
+            </div>
+            <h5 class="card-title">Nueva Venta</h5>
+            <p class="card-text text-muted small">Registrar nueva venta</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTES DE VENTAS - SOLO PARA ADMIN -->
+      <div class="col-md-3" *ngIf="isAdmin()">
+        <div class="card h-100 shadow-sm border-0 cursor-pointer" routerLink="/ventas">
+          <div class="card-body text-center p-4">
+            <div class="bg-info bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+              <i class="bi bi-graph-up text-info fs-1"></i>
+            </div>
+            <h5 class="card-title">Reportes de Ventas</h5>
+            <p class="card-text text-muted small">Consultar reportes y estadísticas</p>
+            <span class="badge bg-warning">ADMIN</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Productos -->
       <div class="col-md-3">
         <div class="card h-100 shadow-sm border-0 cursor-pointer" routerLink="/productos">
@@ -78,19 +105,6 @@
             </div>
             <h5 class="card-title">Usuarios</h5>
             <p class="card-text text-muted small">Administrar usuarios del sistema</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Ventas -->
-      <div class="col-md-3">
-        <div class="card h-100 shadow-sm border-0 cursor-pointer" routerLink="/ventas">
-          <div class="card-body text-center p-4">
-            <div class="bg-success bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
-              <i class="bi bi-cash-coin text-success fs-1"></i>
-            </div>
-            <h5 class="card-title">Ventas</h5>
-            <p class="card-text text-muted small">Registrar y consultar ventas</p>
           </div>
         </div>
       </div>

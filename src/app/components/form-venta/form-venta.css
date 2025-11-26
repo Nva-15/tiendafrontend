@@ -1,0 +1,51 @@
+.detalle-venta {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff !important;
+  }
+  
+  .detalle-venta:hover {
+    background-color: #e9ecef;
+  }
+  
+  .sticky-top {
+    top: 20px;
+  }
+  
+  .form-control:read-only {
+    background-color: #f8f9fa;
+  }
+  
+  .card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+  }
+  
+  .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+  }
+  
+  .btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+  }
+  
+  .alert {
+    border: none;
+    border-radius: 0.5rem;
+  }
+  
+  .invalid-feedback {
+    display: block;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .detalle-venta .row > div {
+      margin-bottom: 10px;
+    }
+    
+    .sticky-top {
+      position: relative !important;
+    }
+  }
