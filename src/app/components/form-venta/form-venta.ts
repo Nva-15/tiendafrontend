@@ -1,17 +1,19 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormControl, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { VentasService } from '../../services/ventas';
 import { CategoriasService } from '../../services/categorias';
 import { ClientesService } from '../../services/clientes';
 import { AuthService } from '../../services/auth';
-import { VentaRequest, DetalleVentaRequest, Producto, Cliente } from '../../interfaces/venta';
+import { VentaRequest, DetalleVentaRequest, Producto } from '../../interfaces/venta';
+import { Cliente } from '../../interfaces/cliente';
 import { Categoria } from '../../interfaces/categoria';
 
 @Component({
   selector: 'app-form-venta',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, FormsModule],
   templateUrl: './form-venta.html',
   styleUrl: './form-venta.css'
@@ -427,9 +429,11 @@ export class FormVentaComponent implements OnInit {
           this.isLoading = false;
           this.successMessage = `¡Venta exitosa! Total: S/. ${ventaCreada.total}`;
           
-          setTimeout(() => {
-            this.router.navigate(['/ventas']);
-          }, 2000);
+          // Limpiar el formulario después de una venta exitosa
+          this.limpiarFormulario();
+          
+          // Recargar productos para actualizar stocks
+          this.cargarProductos();
         },
         error: (error) => {
           console.error('Error creando venta:', error);
@@ -443,6 +447,37 @@ export class FormVentaComponent implements OnInit {
       this.errorMessage = error.message || 'Error al procesar la venta';
       this.isLoading = false;
     }
+  }
+
+  // MÉTODO PARA LIMPIAR EL FORMULARIO DESPUÉS DE VENTA EXITOSA
+  limpiarFormulario() {
+    // Limpiar detalles de venta
+    this.detalles.clear();
+    
+    // Limpiar productos seleccionados temporalmente
+    this.productosSeleccionados.clear();
+    
+    // Limpiar búsqueda de cliente
+    this.limpiarBusquedaCliente();
+    
+    // Resetear método de pago al valor por defecto
+    this.metodoPagoSeleccionado = 'EFECTIVO';
+    this.ventaForm.patchValue({
+      tipoPago: 'EFECTIVO'
+    });
+  }
+
+  // MÉTODO PARA RECARGAR PRODUCTOS Y ACTUALIZAR STOCKS
+  cargarProductos() {
+    this.ventasService.getProductosActivos().subscribe({
+      next: (productos) => {
+        this.productos = productos;
+        this.productosFiltrados = productos;
+      },
+      error: (error) => {
+        console.error('Error recargando productos:', error);
+      }
+    });
   }
 
   marcarCamposComoTouched() {
@@ -468,13 +503,13 @@ export class FormVentaComponent implements OnInit {
     return this.getTotalVenta() + this.getIGV();
   }
 
-  // GETTERS PARA CONTROLES (corregidos con aserción de tipo)
-  get tipoPago() { return this.ventaForm.get('tipoPago') as FormControl; }
-  get clienteNombre() { return this.ventaForm.get('clienteNombre') as FormControl; }
-  get clienteDni() { return this.ventaForm.get('clienteDni') as FormControl; }
-  get clienteTelefono() { return this.ventaForm.get('clienteTelefono') as FormControl; }
-  get clienteCorreo() { return this.ventaForm.get('clienteCorreo') as FormControl; }
-  get clienteDireccion() { return this.ventaForm.get('clienteDireccion') as FormControl; }
+  // GETTERS PARA CONTROLES (corregidos con aserción de tipo seguro)
+  get tipoPago(): AbstractControl | null { return this.ventaForm.get('tipoPago'); }
+  get clienteNombre(): AbstractControl | null { return this.ventaForm.get('clienteNombre'); }
+  get clienteDni(): AbstractControl | null { return this.ventaForm.get('clienteDni'); }
+  get clienteTelefono(): AbstractControl | null { return this.ventaForm.get('clienteTelefono'); }
+  get clienteCorreo(): AbstractControl | null { return this.ventaForm.get('clienteCorreo'); }
+  get clienteDireccion(): AbstractControl | null { return this.ventaForm.get('clienteDireccion'); }
 
   irAlMenuPrincipal() {
     this.router.navigate(['/dashboard']);

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Cliente } from '../interfaces/venta';
+import { Cliente } from '../interfaces/cliente';
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +18,10 @@ export class ClientesService {
     return this.http.get<Cliente>(`${this.apiUrl}/dni/${dni}`);
   }
 
+  getClienteById(id: number): Observable<Cliente> {
+    return this.http.get<Cliente>(`${this.apiUrl}/${id}`);
+  }
+
   createCliente(cliente: Cliente): Observable<Cliente> {
     return this.http.post<Cliente>(this.apiUrl, cliente);
   }
@@ -28,5 +32,11 @@ export class ClientesService {
 
   deleteCliente(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  buscarClientes(termino: string): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(`${this.apiUrl}/buscar`, {
+      params: { termino }
+    });
   }
 }

@@ -1,3 +1,6 @@
+import { Cliente } from './cliente';
+import { Usuario } from './usuario';
+
 export interface Venta {
   id?: number;
   numeroVenta?: string;
@@ -49,7 +52,9 @@ export interface Producto {
   categoriaNombre?: string;
 }
 
-export interface Cliente {
+// Re-exportar Cliente para compatibilidad
+export type { Cliente };
+/*export interface Cliente {
   id?: number; 
   nombre: string;
   dni: string;
@@ -65,4 +70,4 @@ export interface Usuario {
   nombreUsuario: string;
   rol: string;
   estado: string;
-}
+} */

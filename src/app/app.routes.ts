@@ -11,6 +11,8 @@ import { FormCategoriaComponent } from './components/form-categoria/form-categor
 import { AyudaComponent } from './components/ayuda/ayuda';
 import { ListaVentasComponent } from './components/lista-ventas/lista-ventas';
 import { FormVentaComponent } from './components/form-venta/form-venta';
+import { ListaClientesComponent } from './components/lista-clientes/lista-clientes';
+import { FormClienteComponent } from './components/form-cliente/form-cliente';
 
 export const routes: Routes = [
   { 
@@ -87,6 +89,24 @@ export const routes: Routes = [
     path: 'ventas/nueva', 
     component: FormVentaComponent, 
     canActivate: [authGuard] 
+  },
+  { 
+    path: 'clientes', 
+    component: ListaClientesComponent, 
+    title: 'Clientes',
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'clientes/nuevo', 
+    component: FormClienteComponent, 
+    title: 'Nuevo Cliente',
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'clientes/editar/:id', 
+    component: FormClienteComponent, 
+    title: 'Editar Cliente',
+    canActivate: [authGuard]
   },
   { 
     path: 'ayuda', 
