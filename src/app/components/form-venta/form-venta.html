@@ -4,37 +4,32 @@
       <i class="bi bi-cart-plus me-2"></i>
       Nueva Venta
     </h2>
-    <button class="btn btn-outline-secondary" routerLink="/ventas">
-      <i class="bi bi-arrow-left me-2"></i>
-      Volver a Ventas
-    </button>
+    <div>      
+      <button class="btn btn-outline-primary" (click)="irAlMenuPrincipal()">
+        <i class="bi bi-house me-2"></i>
+        Menú Principal
+      </button>
+    </div>
   </div>
 
-  <!-- DEBUG - Temporal --> <!--
-  <div class="alert alert-info small mb-3">
-    <strong>DEBUG Detallado:</strong>
-    <div><strong>Productos cargados:</strong> {{ productos.length }}</div>
-    <div><strong>Cliente:</strong> {{ clienteExistente ? 'Existente' : (mostrarFormCliente ? 'Nuevo' : 'No seleccionado') }}</div>
-    <div><strong>Detalles agregados:</strong> {{ detalles.length }}</div>
-    <div><strong>Formulario válido:</strong> {{ esFormularioValido() }}</div>
-    <div><strong>Detalles completos:</strong> {{ tieneDetallesCompletos() }}</div>
-    <div><strong>Stock válido:</strong> {{ validarStock() }}</div>
-    
-    <div class="mt-2" *ngIf="detalles.length > 0">
-      <strong>Detalles actuales:</strong>
-      <div *ngFor="let detalle of detalles.controls; let i = index" class="small">
-        Detalle {{i}}: 
-        ProductoID={{detalle.get('productoId')?.value}}, 
-        Producto={{getProductoNombre(detalle.get('productoId')?.value)}},
-        Stock={{getStockProducto(detalle.get('productoId')?.value)}}
-      </div>
-    </div>
-  </div> -->
+  <!-- Mensajes -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle me-2"></i>
+    {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
 
   <div class="row">
+    <!-- Panel izquierdo: Búsqueda de cliente y selección de productos -->
     <div class="col-lg-8">
       <!-- Tarjeta de Información del Cliente -->
-      <div class="card">
+      <div class="card mb-4">
         <div class="card-header bg-white">
           <h5 class="mb-0">
             <i class="bi bi-person me-2"></i>
@@ -42,19 +37,6 @@
           </h5>
         </div>
         <div class="card-body">
-          <!-- Mensajes -->
-          <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            {{ errorMessage }}
-            <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
-          </div>
-
-          <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>
-            {{ successMessage }}
-            <button type="button" class="btn-close" (click)="successMessage = ''"></button>
-          </div>
-
           <!-- Búsqueda de cliente por DNI -->
           <div class="row mb-4">
             <div class="col-md-8">
@@ -86,6 +68,20 @@
               <div class="form-text">
                 Ingrese el DNI del cliente (8 dígitos) y presione Buscar o Enter
               </div>
+            </div>
+            
+            <!-- MÉTODO DE PAGO SEPARADO -->
+            <div class="col-md-4">
+              <label for="tipoPago" class="form-label">Método de Pago *</label>
+              <select
+                class="form-select"
+                id="tipoPago"
+                [value]="metodoPagoSeleccionado"
+                (change)="actualizarMetodoPago($event)">
+                <option *ngFor="let tipo of tiposPago" [value]="tipo" [selected]="tipo === 'EFECTIVO'">
+                  {{ tipo }}
+                </option>
+              </select>
             </div>
           </div>
 
@@ -174,167 +170,96 @@
         </div>
       </div>
 
-      <!-- Información de la venta -->
-      <div class="card mt-4">
+      <!-- Selección de Productos -->
+      <div class="card">
         <div class="card-header bg-white">
           <h5 class="mb-0">
             <i class="bi bi-cart me-2"></i>
-            Detalles de la Venta
+            Seleccionar Productos
           </h5>
         </div>
         <div class="card-body">
-          <form [formGroup]="ventaForm">
-            <!-- Método de pago -->
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <label for="tipoPago" class="form-label">Método de Pago *</label>
-                <select
-                  class="form-select"
-                  [class.is-invalid]="tipoPago?.invalid && tipoPago?.touched"
-                  id="tipoPago"
-                  formControlName="tipoPago">
-                  <option *ngFor="let tipo of tiposPago" [value]="tipo">
-                    {{ tipo }}
-                  </option>
-                </select>
-                <div *ngIf="tipoPago?.invalid && tipoPago?.touched" class="invalid-feedback">
-                  Debe seleccionar un método de pago
+          <!-- Filtros -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Filtrar por Categoría</label>
+              <select class="form-select" (change)="filtrarProductosPorCategoria($event)">
+                <option value="">Todas las categorías</option>
+                <option *ngFor="let categoria of categorias" [value]="categoria.id">
+                  {{ categoria.nombre }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Buscar Producto</label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Nombre del producto..."
+                (input)="filtrarProductosPorNombre($event)">
+            </div>
+          </div>
+
+          <!-- Lista de productos disponibles con botones +/- -->
+          <div class="productos-grid">
+            <div *ngFor="let producto of productosFiltrados" 
+                 class="producto-card border rounded p-3 mb-3">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <h6 class="mb-1">{{ producto.nombre }}</h6>
+                  <small class="text-muted">
+                    Categoría: {{ getCategoriaNombre(producto.categoriaId) }} | 
+                    Stock: {{ producto.cantidad }}
+                  </small>
+                  <div class="mt-1">
+                    <strong class="text-primary">S/. {{ producto.precioVenta | number:'1.2-2' }}</strong>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Filtro de productos -->
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Filtrar por Categoría</label>
-                <select class="form-select" (change)="filtrarProductosPorCategoria($event)">
-                  <option value="">Todas las categorías</option>
-                  <option *ngFor="let categoria of categorias" [value]="categoria.id">
-                    {{ categoria.nombre }}
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-6 d-flex align-items-end">
-                <button 
-                  type="button" 
-                  class="btn btn-success w-100" 
-                  (click)="agregarDetalle()"
-                  [disabled]="!(clienteExistente || mostrarFormCliente)">
-                  <i class="bi bi-plus-circle me-2"></i>
-                  Agregar Producto
-                </button>
-              </div>
-            </div>
-
-            <!-- Lista de productos -->
-            <div formArrayName="detalles">
-              <div *ngFor="let detalle of detalles.controls; let i = index" class="detalle-venta mb-3 p-3 border rounded">
-                <div [formGroupName]="i" class="row align-items-center">
-                  <div class="col-md-4">
-                    <label class="form-label">Producto *</label>
-                    <select
-                      class="form-select"
-                      [class.is-invalid]="detalle.get('productoId')?.invalid && detalle.get('productoId')?.touched"
-                      formControlName="productoId">
-                      <option value="">Seleccionar producto</option>
-                      <option *ngFor="let producto of productosFiltrados" [value]="producto.id"
-                              [disabled]="producto.cantidad <= 0">
-                        {{ producto.nombre }} - S/. {{ producto.precioVenta | number:'1.2-2' }} (Stock: {{ producto.cantidad }})
-                      </option>
-                    </select>
-                    <div *ngIf="detalle.get('productoId')?.invalid && detalle.get('productoId')?.touched" class="invalid-feedback">
-                      Debe seleccionar un producto
-                    </div>
-                  </div>
-
-                  <div class="col-md-2">
-                    <label class="form-label">Cantidad *</label>
+                <div class="col-md-4">
+                  <div class="input-group">
+                    <button class="btn btn-outline-secondary" 
+                            type="button"
+                            (click)="decrementarCantidad(producto)"
+                            [disabled]="getCantidadSeleccionada(producto.id) <= 0">
+                      <i class="bi bi-dash"></i>
+                    </button>
                     <input
                       type="number"
-                      class="form-control"
-                      [class.is-invalid]="detalle.get('cantidad')?.invalid && detalle.get('cantidad')?.touched"
-                      formControlName="cantidad"
-                      min="1"
-                      [max]="getStockProducto(detalle.get('productoId')?.value)">
-                    <div *ngIf="detalle.get('cantidad')?.invalid && detalle.get('cantidad')?.touched" class="invalid-feedback">
-                      <span *ngIf="detalle.get('cantidad')?.errors?.['required']">Cantidad requerida</span>
-                      <span *ngIf="detalle.get('cantidad')?.errors?.['min']">Mínimo 1 unidad</span>
-                    </div>
-                  </div>
-
-                  <div class="col-md-2">
-                    <label class="form-label">Precio Unit. *</label>
-                    <input
-                      type="number"
-                      class="form-control"
-                      [class.is-invalid]="detalle.get('precioUnitario')?.invalid && detalle.get('precioUnitario')?.touched"
-                      formControlName="precioUnitario"
-                      step="0.01"
-                      min="0.01">
-                    <div *ngIf="detalle.get('precioUnitario')?.invalid && detalle.get('precioUnitario')?.touched" class="invalid-feedback">
-                      <span *ngIf="detalle.get('precioUnitario')?.errors?.['required']">Precio requerido</span>
-                      <span *ngIf="detalle.get('precioUnitario')?.errors?.['min']">Mínimo S/. 0.01</span>
-                    </div>
-                  </div>
-
-                  <div class="col-md-2">
-                    <label class="form-label">Subtotal</label>
-                    <input
-                      type="text"
-                      class="form-control bg-light"
-                      formControlName="subtotal"
-                      readonly>
-                  </div>
-
-                  <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button
-                      type="button"
-                      class="btn btn-outline-danger w-100"
-                      (click)="eliminarDetalle(i)">
-                      <i class="bi bi-trash"></i>
+                      class="form-control text-center"
+                      [value]="getCantidadSeleccionada(producto.id)"
+                      min="0"
+                      [max]="producto.cantidad"
+                      (change)="actualizarCantidad(producto, $event)"
+                      style="max-width: 80px;">
+                    <button class="btn btn-outline-secondary" 
+                            type="button"
+                            (click)="incrementarCantidad(producto)"
+                            [disabled]="getCantidadSeleccionada(producto.id) >= producto.cantidad">
+                      <i class="bi bi-plus"></i>
                     </button>
                   </div>
                 </div>
-
-                <!-- Mensaje de stock -->
-                <div *ngIf="detalle.get('productoId')?.value" class="mt-2">
-                  <small class="text-muted">
-                    Stock disponible: {{ getStockProducto(detalle.get('productoId')?.value) }} unidades
-                  </small>
-                  <small *ngIf="detalle.get('cantidad')?.value > getStockProducto(detalle.get('productoId')?.value)" 
-                         class="text-danger ms-2">
-                    <i class="bi bi-exclamation-triangle"></i> Stock insuficiente
-                  </small>
-                </div>
-
-                <!-- Información del producto seleccionado -->
-                <div *ngIf="detalle.get('productoId')?.value" class="mt-1">
-                  <small class="text-info">
-                    <i class="bi bi-info-circle me-1"></i>
-                    {{ getProductoNombre(detalle.get('productoId')?.value) }}
-                  </small>
+                <div class="col-md-2">
+                  <button class="btn btn-success w-100"
+                          (click)="agregarProductoAlCarrito(producto)"
+                          [disabled]="getCantidadSeleccionada(producto.id) <= 0 || getCantidadSeleccionada(producto.id) > producto.cantidad">
+                    <i class="bi bi-cart-plus"></i>
+                  </button>
                 </div>
               </div>
             </div>
-          </form>
+          </div>
 
           <!-- Mensaje cuando no hay productos -->
-          <div *ngIf="detalles.length === 0" class="text-center py-4 text-muted">
-            <i class="bi bi-cart-x display-4 d-block mb-2"></i>
-            <p>No hay productos agregados a la venta</p>
-            <p class="small" *ngIf="!clienteExistente && !mostrarFormCliente">
-              Primero busque o registre un cliente para agregar productos
-            </p>
-            <p class="small" *ngIf="clienteExistente || mostrarFormCliente">
-              Haga clic en "Agregar Producto" para comenzar
-            </p>
+          <div *ngIf="productosFiltrados.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-search display-4 d-block mb-2"></i>
+            <p>No se encontraron productos</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Resumen de venta -->
+    <!-- Panel derecho: Resumen de venta -->
     <div class="col-lg-4">
       <div class="card sticky-top">
         <div class="card-header bg-primary text-white">
@@ -344,15 +269,12 @@
           </h5>
         </div>
         <div class="card-body">
-          <!-- Productos seleccionados -->
-          <div *ngIf="detalles.length > 0" class="mb-3">
-            <h6 class="mb-3">
-              <i class="bi bi-list-check me-2"></i>
-              Productos Seleccionados
-            </h6>
-            <div class="productos-lista" style="max-height: 200px; overflow-y: auto;">
+          <!-- Productos en el carrito -->
+          <div class="mb-3">
+            <h6>Productos en la Venta</h6>
+            <div class="productos-carrito" style="max-height: 300px; overflow-y: auto;">
               <div *ngFor="let detalle of detalles.controls; let i = index" 
-                   class="producto-item border-bottom pb-2 mb-2">
+                   class="producto-carrito-item border-bottom pb-2 mb-2">
                 <div class="d-flex justify-content-between align-items-start">
                   <div class="flex-grow-1">
                     <strong class="d-block small">{{ getProductoNombre(detalle.get('productoId')?.value) }}</strong>
@@ -360,20 +282,27 @@
                       {{ detalle.get('cantidad')?.value }} x S/. {{ detalle.get('precioUnitario')?.value | number:'1.2-2' }}
                     </small>
                   </div>
-                  <strong class="text-success small">
-                    S/. {{ detalle.get('subtotal')?.value | number:'1.2-2' }}
-                  </strong>
+                  <div class="text-end">
+                    <strong class="text-success d-block">
+                      S/. {{ detalle.get('subtotal')?.value | number:'1.2-2' }}
+                    </strong>
+                    <button class="btn btn-sm btn-outline-danger mt-1"
+                            (click)="eliminarDetalle(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div *ngIf="detalles.length === 0" class="text-center py-3 text-muted">
+              <i class="bi bi-cart-x d-block mb-2"></i>
+              <small>No hay productos en la venta</small>
+            </div>
           </div>
 
+          <!-- Totales -->
           <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="fw-bold">Productos:</span>
-              <span class="badge bg-secondary">{{ detalles.length }}</span>
-            </div>
-            
             <div class="d-flex justify-content-between mb-2">
               <span>Subtotal:</span>
               <strong>S/. {{ getTotalVenta() | number:'1.2-2' }}</strong>
@@ -412,14 +341,14 @@
             </small>
           </div>
 
-          <!-- Método de pago -->
-          <div *ngIf="tipoPago?.value" class="mb-3 p-2 bg-light rounded">
+          <!-- Método de pago  -->
+          <div class="mb-3 p-2 bg-light rounded">
             <h6 class="mb-2">
               <i class="bi bi-credit-card me-1"></i>
               Método de Pago
             </h6>
             <small class="d-block">
-              <strong>Tipo:</strong> {{ tipoPago?.value }}
+              <strong>Tipo:</strong> {{ metodoPagoSeleccionado }}
             </small>
           </div>
 
@@ -433,27 +362,14 @@
             {{ isLoading ? 'Procesando...' : 'Realizar Venta' }}
           </button>
 
-          <div class="mt-3">
-            <small class="text-muted">
-              <i class="bi bi-info-circle me-1"></i>
-              Revise que todos los datos sean correctos antes de confirmar la venta.
-            </small>
-          </div>
-
-          <!-- Validaciones del formulario -->
+          <!-- Validaciones -->
           <div *ngIf="!esFormularioValido()" class="mt-3">
             <div class="alert alert-warning small">
               <i class="bi bi-exclamation-triangle me-1"></i>
-              <strong>Validaciones pendientes:</strong>
+              <strong>Para continuar:</strong>
               <ul class="mb-0 mt-1">
-                <li *ngIf="!clienteExistente && !mostrarFormCliente">• Busque o registre un cliente</li>
-                <li *ngIf="clienteNombre?.invalid">• Complete el nombre del cliente</li>
-                <li *ngIf="clienteDni?.invalid">• Complete el DNI del cliente (8 dígitos)</li>
-                <li *ngIf="clienteCorreo?.invalid">• Formato de correo inválido</li>
-                <li *ngIf="clienteTelefono?.invalid">• Teléfono debe tener 9 dígitos</li>
+                <li *ngIf="!clienteExistente && !mostrarFormCliente">• Busque un cliente por DNI</li>
                 <li *ngIf="detalles.length === 0">• Agregue al menos un producto</li>
-                <li *ngIf="detalles.length > 0 && !tieneDetallesCompletos()">• Complete todos los productos correctamente</li>
-                <li *ngIf="!validarStock()">• Verifique el stock de los productos</li>
               </ul>
             </div>
           </div>

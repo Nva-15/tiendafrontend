@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { VentasService } from '../../services/ventas';
@@ -41,6 +41,12 @@ export class FormVentaComponent implements OnInit {
   // Variable para DNI de búsqueda
   dniBusqueda: string = '';
 
+  // Map para productos seleccionados temporalmente
+  productosSeleccionados: Map<number, number> = new Map();
+
+  // Variable para controlar el método de pago
+  metodoPagoSeleccionado: string = 'EFECTIVO';
+
   constructor() {
     this.ventaForm = this.fb.group({
       // Datos del cliente (para nuevo cliente)
@@ -57,6 +63,11 @@ export class FormVentaComponent implements OnInit {
 
   ngOnInit() {
     this.cargarDatosIniciales();
+    // Forzar el valor por defecto
+    this.ventaForm.patchValue({
+      tipoPago: 'EFECTIVO'
+    });
+    this.metodoPagoSeleccionado = 'EFECTIVO';
   }
 
   get detalles(): FormArray {
@@ -66,7 +77,6 @@ export class FormVentaComponent implements OnInit {
   cargarDatosIniciales() {
     this.isLoading = true;
 
-    // Cargar categorías activas
     this.categoriasService.getCategoriasActivas().subscribe({
       next: (categorias) => {
         this.categorias = categorias;
@@ -77,10 +87,8 @@ export class FormVentaComponent implements OnInit {
       }
     });
 
-    // Cargar productos activos
     this.ventasService.getProductosActivos().subscribe({
       next: (productos) => {
-        console.log('Productos cargados:', productos);
         this.productos = productos;
         this.productosFiltrados = productos;
         this.isLoading = false;
@@ -93,30 +101,20 @@ export class FormVentaComponent implements OnInit {
     });
   }
 
-  // OBTENER USUARIO AUTENTICADO
   getUsuarioAutenticado(): any {
     const usuario = this.authService.getCurrentUser();
-    console.log('Usuario autenticado:', usuario);
     return usuario;
   }
 
-  // OBTENER ID DE USUARIO AUTENTICADO
   getUsuarioId(): number {
     const usuario = this.getUsuarioAutenticado();
     if (usuario && usuario.id) {
       return usuario.id;
     }
-    
-    const token = this.authService.getToken();
-    if (token) {
-      console.warn('Usuario no encontrado en localStorage pero hay token');
-    }
-    
-    console.error('No se pudo obtener el ID del usuario autenticado');
     return 0;
   }
 
-  // Método para buscar cliente por DNI
+  // BUSCAR CLIENTE POR DNI
   buscarCliente() {
     if (!this.dniBusqueda || this.dniBusqueda.length !== 8) {
       this.errorMessage = 'Ingrese un DNI válido de 8 dígitos';
@@ -133,7 +131,6 @@ export class FormVentaComponent implements OnInit {
         this.clienteExistente = cliente;
         this.mostrarFormCliente = false;
         
-        // Llenar formulario con datos del cliente existente
         this.ventaForm.patchValue({
           clienteNombre: cliente.nombre,
           clienteDni: cliente.dni,
@@ -148,11 +145,9 @@ export class FormVentaComponent implements OnInit {
         this.isBuscandoCliente = false;
         
         if (error.status === 404) {
-          // Cliente no encontrado - activar formulario para nuevo cliente
           this.clienteExistente = null;
           this.mostrarFormCliente = true;
           
-          // Pre-llenar DNI
           this.ventaForm.patchValue({
             clienteDni: this.dniBusqueda,
             clienteNombre: '',
@@ -176,14 +171,31 @@ export class FormVentaComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
     
-    // Resetear formulario de cliente
     this.ventaForm.patchValue({
       clienteNombre: '',
       clienteDni: '',
       clienteCorreo: '',
       clienteTelefono: '',
-      clienteDireccion: ''
+      clienteDireccion: '',
+      tipoPago: 'EFECTIVO'
     });
+    this.metodoPagoSeleccionado = 'EFECTIVO';
+  }
+
+  // ACTUALIZAR MÉTODO DE PAGO
+  actualizarMetodoPago(event: any) {
+    const nuevoMetodo = event.target.value;
+    this.metodoPagoSeleccionado = nuevoMetodo;
+    this.ventaForm.patchValue({
+      tipoPago: nuevoMetodo
+    });
+    console.log('Método de pago actualizado:', nuevoMetodo);
+  }
+
+  // MÉTODOS PARA INTERFAZ CON BOTONES +/-
+  getCategoriaNombre(categoriaId: number): string {
+    const categoria = this.categorias.find(c => c.id === categoriaId);
+    return categoria ? categoria.nombre : 'Sin categoría';
   }
 
   filtrarProductosPorCategoria(event: any) {
@@ -196,40 +208,81 @@ export class FormVentaComponent implements OnInit {
     }
   }
 
-  agregarDetalle() {
-    const detalleForm = this.fb.group({
-      productoId: ['', Validators.required],
-      cantidad: [1, [Validators.required, Validators.min(1)]],
-      precioUnitario: [0, [Validators.required, Validators.min(0.01)]],
-      subtotal: [{value: 0, disabled: true}]
-    });
-
-    // Cuando se selecciona un producto, cargar su precio
-    detalleForm.get('productoId')?.valueChanges.subscribe(productoId => {
-      console.log('Producto seleccionado:', productoId, 'Tipo:', typeof productoId);
-      if (productoId) {
-        const producto = this.productos.find(p => p.id === +productoId);
-        console.log('Producto encontrado:', producto);
-        if (producto) {
-          detalleForm.patchValue({
-            precioUnitario: producto.precioVenta || 0
-          }, { emitEvent: false });
-        }
-      }
-    });
-
-    // Calcular subtotal automáticamente
-    detalleForm.get('cantidad')?.valueChanges.subscribe(() => {
-      this.calcularSubtotal(detalleForm);
-    });
-
-    detalleForm.get('precioUnitario')?.valueChanges.subscribe(() => {
-      this.calcularSubtotal(detalleForm);
-    });
-
-    this.detalles.push(detalleForm);
+  filtrarProductosPorNombre(event: any) {
+    const termino = event.target.value.toLowerCase();
+    if (termino) {
+      this.productosFiltrados = this.productos.filter(p => 
+        p.nombre.toLowerCase().includes(termino)
+      );
+    } else {
+      this.productosFiltrados = this.productos;
+    }
   }
 
+  getCantidadSeleccionada(productoId: number): number {
+    return this.productosSeleccionados.get(productoId) || 0;
+  }
+
+  incrementarCantidad(producto: Producto) {
+    const current = this.getCantidadSeleccionada(producto.id);
+    if (current < producto.cantidad) {
+      this.productosSeleccionados.set(producto.id, current + 1);
+    }
+  }
+
+  decrementarCantidad(producto: Producto) {
+    const current = this.getCantidadSeleccionada(producto.id);
+    if (current > 0) {
+      this.productosSeleccionados.set(producto.id, current - 1);
+    }
+  }
+
+  actualizarCantidad(producto: Producto, event: any) {
+    const cantidad = parseInt(event.target.value) || 0;
+    if (cantidad >= 0 && cantidad <= producto.cantidad) {
+      this.productosSeleccionados.set(producto.id, cantidad);
+    } else if (cantidad > producto.cantidad) {
+      this.productosSeleccionados.set(producto.id, producto.cantidad);
+      event.target.value = producto.cantidad;
+    }
+  }
+
+  agregarProductoAlCarrito(producto: Producto) {
+    const cantidad = this.getCantidadSeleccionada(producto.id);
+    if (cantidad > 0 && cantidad <= producto.cantidad) {
+      const existingIndex = this.detalles.controls.findIndex(
+        detalle => detalle.get('productoId')?.value === producto.id
+      );
+
+      if (existingIndex >= 0) {
+        const detalle = this.detalles.at(existingIndex);
+        const nuevaCantidad = detalle.get('cantidad')?.value + cantidad;
+        
+        if (nuevaCantidad <= producto.cantidad) {
+          detalle.patchValue({
+            cantidad: nuevaCantidad
+          });
+          this.calcularSubtotal(detalle as FormGroup);
+        } else {
+          this.errorMessage = `No hay suficiente stock. Stock disponible: ${producto.cantidad}`;
+          return;
+        }
+      } else {
+        const detalleForm = this.fb.group({
+          productoId: [producto.id, Validators.required],
+          cantidad: [cantidad, [Validators.required, Validators.min(1)]],
+          precioUnitario: [producto.precioVenta, [Validators.required, Validators.min(0.01)]],
+          subtotal: [{value: cantidad * producto.precioVenta, disabled: true}]
+        });
+        this.detalles.push(detalleForm);
+      }
+
+      this.productosSeleccionados.set(producto.id, 0);
+      this.errorMessage = '';
+    }
+  }
+
+  // MÉTODOS PARA CALCULAR Y MANEJAR DETALLES
   calcularSubtotal(detalleForm: FormGroup) {
     const cantidad = detalleForm.get('cantidad')?.value || 0;
     const precio = detalleForm.get('precioUnitario')?.value || 0;
@@ -248,7 +301,6 @@ export class FormVentaComponent implements OnInit {
     }, 0);
   }
 
-  // Manejar conversión de tipos
   getProductoNombre(productoId: any): string {
     if (!productoId) return 'Seleccione un producto';
     
@@ -257,7 +309,6 @@ export class FormVentaComponent implements OnInit {
     return producto ? producto.nombre : 'Producto no encontrado';
   }
 
-  // Manejar conversión de tipos
   getStockProducto(productoId: any): number {
     if (!productoId) return 0;
     
@@ -266,7 +317,6 @@ export class FormVentaComponent implements OnInit {
     return producto ? (producto.cantidad || 0) : 0;
   }
 
-  // Validación mejorada
   validarStock(): boolean {
     for (let i = 0; i < this.detalles.length; i++) {
       const detalle = this.detalles.at(i);
@@ -284,7 +334,6 @@ export class FormVentaComponent implements OnInit {
     return true;
   }
 
-  // Validación de detalles
   tieneDetallesCompletos(): boolean {
     if (this.detalles.length === 0) return false;
     
@@ -297,27 +346,15 @@ export class FormVentaComponent implements OnInit {
     });
   }
 
-  // Validación completa del formulario
   esFormularioValido(): boolean {
     const clienteValido = this.clienteExistente || this.mostrarFormCliente;
     const detallesValidos = this.tieneDetallesCompletos();
     const stockValido = this.validarStock();
     
-    console.log('Validación:', {
-      clienteValido,
-      detallesValidos,
-      stockValido,
-      formValid: this.ventaForm.valid,
-      detallesLength: this.detalles.length
-    });
-    
     return this.ventaForm.valid && detallesValidos && clienteValido && stockValido;
   }
 
   async onSubmit() {
-    console.log('Validando formulario...');
-    
-    // VERIFICAR AUTENTICACIÓN
     if (!this.authService.isLoggedIn()) {
       this.errorMessage = 'Debe estar autenticado para realizar una venta';
       return;
@@ -357,11 +394,8 @@ export class FormVentaComponent implements OnInit {
       let clienteId: number;
 
       if (this.clienteExistente) {
-        // Usar cliente existente
         clienteId = this.clienteExistente.id!;
-        console.log('Usando cliente existente ID:', clienteId);
       } else {
-        // Crear nuevo cliente
         const nuevoCliente: Cliente = {
           nombre: this.ventaForm.get('clienteNombre')?.value,
           dni: this.ventaForm.get('clienteDni')?.value,
@@ -370,16 +404,13 @@ export class FormVentaComponent implements OnInit {
           direccion: this.ventaForm.get('clienteDireccion')?.value || undefined
         };
 
-        console.log('Creando nuevo cliente:', nuevoCliente);
         const clienteCreado = await this.clientesService.createCliente(nuevoCliente).toPromise();
         if (!clienteCreado?.id) {
           throw new Error('Error al crear el cliente');
         }
         clienteId = clienteCreado.id;
-        console.log('Cliente creado ID:', clienteId);
       }
 
-      // Crear la venta CON USUARIO AUTENTICADO
       const ventaData: VentaRequest = {
         clienteId: clienteId,
         usuarioId: usuarioId,
@@ -391,12 +422,11 @@ export class FormVentaComponent implements OnInit {
         }))
       };
 
-      console.log('Enviando venta con usuario ID:', usuarioId, 'Datos:', ventaData);
       this.ventasService.createVenta(ventaData).subscribe({
         next: (ventaCreada) => {
-          console.log('Venta creada:', ventaCreada);
           this.isLoading = false;
-          this.successMessage = `Venta creada exitosamente. Total: S/. ${ventaCreada.total}`;
+          this.successMessage = `¡Venta exitosa! Total: S/. ${ventaCreada.total}`;
+          
           setTimeout(() => {
             this.router.navigate(['/ventas']);
           }, 2000);
@@ -430,20 +460,23 @@ export class FormVentaComponent implements OnInit {
     return this.ventaForm.get('clienteDni')?.value || 'No especificado';
   }
 
-  // Cálculo de IGV
   getIGV(): number {
     return this.getTotalVenta() * 0.18;
   }
 
-  // Cálculo de total con IGV
   getTotalConIGV(): number {
     return this.getTotalVenta() + this.getIGV();
   }
 
-  // Getters para acceder fácilmente a los controles
-  get tipoPago() { return this.ventaForm.get('tipoPago'); }
-  get clienteNombre() { return this.ventaForm.get('clienteNombre'); }
-  get clienteDni() { return this.ventaForm.get('clienteDni'); }
-  get clienteTelefono() { return this.ventaForm.get('clienteTelefono'); }
-  get clienteCorreo() { return this.ventaForm.get('clienteCorreo'); }
+  // GETTERS PARA CONTROLES (corregidos con aserción de tipo)
+  get tipoPago() { return this.ventaForm.get('tipoPago') as FormControl; }
+  get clienteNombre() { return this.ventaForm.get('clienteNombre') as FormControl; }
+  get clienteDni() { return this.ventaForm.get('clienteDni') as FormControl; }
+  get clienteTelefono() { return this.ventaForm.get('clienteTelefono') as FormControl; }
+  get clienteCorreo() { return this.ventaForm.get('clienteCorreo') as FormControl; }
+  get clienteDireccion() { return this.ventaForm.get('clienteDireccion') as FormControl; }
+
+  irAlMenuPrincipal() {
+    this.router.navigate(['/dashboard']);
+  }
 }
