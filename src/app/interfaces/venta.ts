@@ -1,6 +1,6 @@
-// interfaces/venta.ts
 export interface Venta {
   id?: number;
+  numeroVenta?: string;
   fecha?: string;
   total: number;
   clienteId: number;
