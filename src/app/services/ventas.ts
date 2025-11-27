@@ -12,6 +12,7 @@ export class VentasService {
   private apiUrl = 'http://localhost:8080/api/ventas';
 
   getVentas(): Observable<Venta[]> {
+    console.log('Obteniendo ventas desde:', this.apiUrl); // DEBUG
     return this.http.get<Venta[]>(this.apiUrl);
   }
 
@@ -37,6 +38,7 @@ export class VentasService {
 
   // Métodos para obtener datos relacionados
   getProductosActivos(): Observable<Producto[]> {
+    console.log('Obteniendo productos activos'); // DEBUG
     return this.http.get<Producto[]>('http://localhost:8080/api/productos/activos');
   }
 

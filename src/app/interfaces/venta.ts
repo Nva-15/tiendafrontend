@@ -6,6 +6,8 @@ export interface Venta {
   numeroVenta?: string;
   fecha?: string;
   total: number;
+  subtotal?: number;
+  igv?: number;
   clienteId: number;
   usuarioId: number;
   estado: string;

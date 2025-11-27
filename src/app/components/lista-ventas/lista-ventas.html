@@ -263,7 +263,7 @@
   </div>
 </div>
 
-<!-- Modal para ver detalle de venta -->
+<!-- Modal para ver detalle de venta - ACTUALIZADO CON IGV -->
 <div class="modal fade" #detalleVentaModal id="detalleVentaModal" tabindex="-1" aria-labelledby="detalleVentaModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -355,9 +355,20 @@
               </tr>
             </tbody>
             <tfoot class="table-light">
+              <!-- SUBTOTAL -->
+              <tr>
+                <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                <td class="text-end"><strong>S/ {{ (ventaSeleccionada?.subtotal || 0) | number:'1.2-2' }}</strong></td>
+              </tr>
+              <!-- IGV - NUEVO CAMPO AGREGADO -->
+              <tr>
+                <td colspan="4" class="text-end"><strong>IGV (18%):</strong></td>
+                <td class="text-end"><strong>S/ {{ (ventaSeleccionada?.igv || 0) | number:'1.2-2' }}</strong></td>
+              </tr>
+              <!-- TOTAL -->
               <tr>
                 <td colspan="4" class="text-end"><strong>Total:</strong></td>
-                <td class="text-end"><strong>S/ {{ ventaSeleccionada?.total | number:'1.2-2' }}</strong></td>
+                <td class="text-end"><strong class="text-primary">S/ {{ ventaSeleccionada?.total | number:'1.2-2' }}</strong></td>
               </tr>
             </tfoot>
           </table>
@@ -379,6 +390,23 @@
               <tr>
                 <td><strong>Rol:</strong></td>
                 <td>{{ ventaSeleccionada?.usuario?.rol || 'N/A' }}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted">Resumen de Montos</h6>
+            <table class="table table-sm">
+              <tr>
+                <td><strong>Subtotal:</strong></td>
+                <td class="text-end">S/ {{ (ventaSeleccionada?.subtotal || 0) | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td><strong>IGV (18%):</strong></td>
+                <td class="text-end">S/ {{ (ventaSeleccionada?.igv || 0) | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td><strong>Total:</strong></td>
+                <td class="text-end"><strong class="text-success">S/ {{ ventaSeleccionada?.total | number:'1.2-2' }}</strong></td>
               </tr>
             </table>
           </div>

@@ -63,6 +63,7 @@ export class ListaVentasComponent implements OnInit {
     this.isLoading = true;
     this.ventasService.getVentas().subscribe({
       next: (ventas) => {
+        console.log('Ventas cargadas:', ventas); // DEBUG
         this.ventas = ventas;
         this.aplicarFiltros();
         this.calcularEstadisticas();
@@ -70,7 +71,7 @@ export class ListaVentasComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error cargando ventas:', error);
-        this.errorMessage = 'Error al cargar las ventas';
+        this.errorMessage = 'Error al cargar las ventas: ' + error.message;
         this.isLoading = false;
       }
     });
@@ -106,19 +107,19 @@ export class ListaVentasComponent implements OnInit {
       );
     }
 
-    // Filtro por fecha desde - CORREGIDO (solo comparar fechas sin horas)
+    // Filtro por fecha desde
     if (this.filtroFechaDesde) {
       const fechaDesde = new Date(this.filtroFechaDesde);
       fechaDesde.setHours(0, 0, 0, 0);
       ventasFiltradas = ventasFiltradas.filter(venta => {
         if (!venta.fecha) return false;
         const fechaVenta = new Date(venta.fecha);
-        fechaVenta.setHours(0, 0, 0, 0); // Normalizar fecha de venta
+        fechaVenta.setHours(0, 0, 0, 0);
         return fechaVenta >= fechaDesde;
       });
     }
 
-    // Filtro por fecha hasta - CORREGIDO (solo comparar fechas sin horas)
+    // Filtro por fecha hasta
     if (this.filtroFechaHasta) {
       const fechaHasta = new Date(this.filtroFechaHasta);
       fechaHasta.setHours(23, 59, 59, 999);
@@ -148,6 +149,7 @@ export class ListaVentasComponent implements OnInit {
   }
 
   verDetalle(venta: Venta) {
+    console.log('Venta seleccionada:', venta); // DEBUG
     this.ventaSeleccionada = venta;
     const modalElement = this.detalleVentaModal.nativeElement;
     const modal = new bootstrap.Modal(modalElement);
@@ -173,7 +175,7 @@ export class ListaVentasComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error cancelando venta:', error);
-          alert('Error al cancelar la venta');
+          alert('Error al cancelar la venta: ' + error.message);
         }
       });
     }
