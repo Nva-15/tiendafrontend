@@ -125,14 +125,14 @@
         <table class="table table-hover mb-0">
           <thead class="table-light">
             <tr>
-              <th width="60" class="text-center">#</th>
-              <th>Producto</th>
-              <th width="150">Categoría</th>
-              <th width="120">Precio Compra</th>
-              <th width="120">Precio Venta</th>
-              <th width="100">Stock</th>
-              <th width="100">Estado</th>
-              <th width="150" class="text-center">Acciones</th>
+              <th width="50" class="text-center">#</th>
+              <th width="30%">Producto</th>
+              <th width="15%">Categoría</th>
+              <th width="12%" class="text-end">P. Compra</th>
+              <th width="12%" class="text-end">P. Venta</th>
+              <th width="8%" class="text-center">Stock</th>
+              <th width="10%" class="text-center">Estado</th>
+              <th width="13%" class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -143,7 +143,7 @@
               <td>
                 <div>
                   <strong class="d-block">{{ producto.nombre }}</strong>
-                  <small class="text-muted d-block" style="max-width: 300px;">
+                  <small class="text-muted d-block">
                     {{ producto.descripcion || 'Sin descripción' }}
                   </small>
                   <small class="text-info">
@@ -157,35 +157,35 @@
                   {{ getNombreCategoria(producto.categoriaId) }}
                 </span>
               </td>
-              <td>
+              <td class="text-end">
                 <span class="text-success fw-bold">
                   S/ {{ (producto.precioCompra || 0).toFixed(2) }}
                 </span>
               </td>
-              <td>
+              <td class="text-end">
                 <span class="text-primary fw-bold">
                   S/ {{ (producto.precioVenta || 0).toFixed(2) }}
                 </span>
               </td>
-              <td>
+              <td class="text-center">
                 <span 
-                  class="badge"
+                  class="badge py-1 px-2"
                   [ngClass]="getStockStatus(producto.cantidad, producto.stockMinimo)">
                   {{ producto.cantidad || 0 }}
                 </span>
                 <small *ngIf="(producto.cantidad || 0) <= (producto.stockMinimo || 10)" 
-                       class="d-block text-warning">
+                       class="text-warning d-block mt-1">
                   <i class="bi bi-exclamation-triangle me-1"></i>
-                  Stock bajo
+                  Bajo
                 </small>
               </td>
-              <td>
+              <td class="text-center">
                 <span 
-                  class="badge cursor-pointer"
+                  class="badge cursor-pointer py-2 px-3 fw-normal"
                   [ngClass]="getEstadoBadge(producto.estado)"
                   (click)="cambiarEstado(producto)"
                   title="Click para cambiar estado">
-                  {{ producto.estado || 'ACTIVO' }}
+                  {{ producto.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
               <td class="text-center">

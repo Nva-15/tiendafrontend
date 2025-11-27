@@ -31,8 +31,7 @@ export class FormClienteComponent implements OnInit {
       dni: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(8), Validators.pattern('^[0-9]*$')]],
       correo: ['', [Validators.email]],
       telefono: ['', [Validators.pattern('^[0-9]*$'), Validators.minLength(9), Validators.maxLength(9)]],
-      direccion: [''],
-      estado: ['ACTIVO', Validators.required]
+      direccion: ['']
     });
   }
 
@@ -119,5 +118,4 @@ export class FormClienteComponent implements OnInit {
   get correo(): AbstractControl | null { return this.clienteForm.get('correo'); }
   get telefono(): AbstractControl | null { return this.clienteForm.get('telefono'); }
   get direccion(): AbstractControl | null { return this.clienteForm.get('direccion'); }
-  get estado(): AbstractControl | null { return this.clienteForm.get('estado'); }
 }

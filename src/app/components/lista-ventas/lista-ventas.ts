@@ -56,7 +56,24 @@ export class ListaVentasComponent implements OnInit {
   ];
 
   ngOnInit() {
+    this.establecerRangoFechasPorDefecto();
     this.cargarVentas();
+  }
+
+  establecerRangoFechasPorDefecto() {
+    const fechaHasta = new Date();
+    const fechaDesde = new Date();
+    fechaDesde.setDate(fechaHasta.getDate() - 7); // Últimos 7 días
+    
+    this.filtroFechaHasta = this.formatearFecha(fechaHasta);
+    this.filtroFechaDesde = this.formatearFecha(fechaDesde);
+  }
+
+  formatearFecha(fecha: Date): string {
+    const año = fecha.getFullYear();
+    const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    const dia = fecha.getDate().toString().padStart(2, '0');
+    return `${año}-${mes}-${dia}`;
   }
 
   cargarVentas() {
@@ -64,7 +81,8 @@ export class ListaVentasComponent implements OnInit {
     this.ventasService.getVentas().subscribe({
       next: (ventas) => {
         console.log('Ventas cargadas:', ventas); // DEBUG
-        this.ventas = ventas;
+        // Ordenar ventas por ID de forma descendente (más recientes primero)
+        this.ventas = ventas.sort((a, b) => (b.id || 0) - (a.id || 0));
         this.aplicarFiltros();
         this.calcularEstadisticas();
         this.isLoading = false;
@@ -77,7 +95,25 @@ export class ListaVentasComponent implements OnInit {
     });
   }
 
+  validarFechas(): boolean {
+    if (this.filtroFechaDesde && this.filtroFechaHasta) {
+      const fechaDesde = new Date(this.filtroFechaDesde);
+      const fechaHasta = new Date(this.filtroFechaHasta);
+      
+      if (fechaHasta < fechaDesde) {
+        alert('La fecha "Hasta" no puede ser menor que la fecha "Desde"');
+        this.filtroFechaHasta = this.filtroFechaDesde;
+        return false;
+      }
+    }
+    return true;
+  }
+
   aplicarFiltros() {
+    if (!this.validarFechas()) {
+      return;
+    }
+
     let ventasFiltradas = this.ventas;
 
     // Filtro por búsqueda general
@@ -107,31 +143,61 @@ export class ListaVentasComponent implements OnInit {
       );
     }
 
-    // Filtro por fecha desde
+    // Filtro por fecha desde 
     if (this.filtroFechaDesde) {
       const fechaDesde = new Date(this.filtroFechaDesde);
-      fechaDesde.setHours(0, 0, 0, 0);
+      const fechaDesdeUTC = new Date(fechaDesde);
+      fechaDesdeUTC.setUTCHours(5, 0, 0, 0);
+      
       ventasFiltradas = ventasFiltradas.filter(venta => {
         if (!venta.fecha) return false;
         const fechaVenta = new Date(venta.fecha);
-        fechaVenta.setHours(0, 0, 0, 0);
-        return fechaVenta >= fechaDesde;
+        return fechaVenta >= fechaDesdeUTC;
       });
     }
 
-    // Filtro por fecha hasta
+    // Filtro por fecha hasta 
     if (this.filtroFechaHasta) {
       const fechaHasta = new Date(this.filtroFechaHasta);
-      fechaHasta.setHours(23, 59, 59, 999);
+      const fechaHastaUTC = new Date(fechaHasta);
+      fechaHastaUTC.setUTCDate(fechaHastaUTC.getUTCDate() + 1);
+      fechaHastaUTC.setUTCHours(4, 59, 59, 999);
+      
       ventasFiltradas = ventasFiltradas.filter(venta => {
         if (!venta.fecha) return false;
         const fechaVenta = new Date(venta.fecha);
-        return fechaVenta <= fechaHasta;
+        return fechaVenta <= fechaHastaUTC;
       });
     }
 
     this.ventasFiltradas = ventasFiltradas;
     this.calcularEstadisticas();
+  }
+
+  onFechaDesdeChange() {
+    if (this.filtroFechaDesde && this.filtroFechaHasta) {
+      const fechaDesde = new Date(this.filtroFechaDesde);
+      const fechaHasta = new Date(this.filtroFechaHasta);
+      
+      if (fechaHasta < fechaDesde) {
+        this.filtroFechaHasta = this.filtroFechaDesde;
+      }
+    }
+    this.aplicarFiltros();
+  }
+
+  onFechaHastaChange() {
+    if (this.filtroFechaDesde && this.filtroFechaHasta) {
+      const fechaDesde = new Date(this.filtroFechaDesde);
+      const fechaHasta = new Date(this.filtroFechaHasta);
+      
+      if (fechaHasta < fechaDesde) {
+        alert('La fecha "Hasta" no puede ser menor que la fecha "Desde"');
+        this.filtroFechaHasta = this.filtroFechaDesde;
+        return;
+      }
+    }
+    this.aplicarFiltros();
   }
 
   calcularEstadisticas() {
@@ -141,8 +207,7 @@ export class ListaVentasComponent implements OnInit {
 
   limpiarFiltros() {
     this.searchTerm = '';
-    this.filtroFechaDesde = '';
-    this.filtroFechaHasta = '';
+    this.establecerRangoFechasPorDefecto();
     this.filtroEstado = 'TODOS';
     this.filtroMetodoPago = 'TODOS';
     this.aplicarFiltros();

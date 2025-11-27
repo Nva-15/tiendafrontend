@@ -23,18 +23,6 @@ export class ListaClientesComponent implements OnInit {
 
   // Filtros
   searchTerm = '';
-  filtroEstado = 'TODOS';
-
-  // Estadísticas
-  clientesActivos = 0;
-  clientesInactivos = 0;
-
-  // Opciones de filtros
-  opcionesEstado = [
-    { valor: 'TODOS', texto: 'Todos los estados' },
-    { valor: 'ACTIVO', texto: 'Activos' },
-    { valor: 'INACTIVO', texto: 'Inactivos' }
-  ];
 
   ngOnInit() {
     this.cargarClientes();
@@ -46,7 +34,6 @@ export class ListaClientesComponent implements OnInit {
       next: (data) => {
         this.clientes = data;
         this.aplicarFiltros();
-        this.calcularEstadisticas();
         this.isLoading = false;
       },
       error: (error) => {
@@ -71,25 +58,11 @@ export class ListaClientesComponent implements OnInit {
       );
     }
 
-    // Filtro por estado
-    if (this.filtroEstado !== 'TODOS') {
-      clientesFiltrados = clientesFiltrados.filter(cliente => 
-        cliente.estado === this.filtroEstado
-      );
-    }
-
     this.clientesFiltrados = clientesFiltrados;
-    this.calcularEstadisticas();
-  }
-
-  calcularEstadisticas() {
-    this.clientesActivos = this.clientesFiltrados.filter(c => c.estado === 'ACTIVO').length;
-    this.clientesInactivos = this.clientesFiltrados.filter(c => c.estado === 'INACTIVO').length;
   }
 
   limpiarFiltros() {
     this.searchTerm = '';
-    this.filtroEstado = 'TODOS';
     this.aplicarFiltros();
   }
 
@@ -111,26 +84,6 @@ export class ListaClientesComponent implements OnInit {
         }
       });
     }
-  }
-
-  cambiarEstado(cliente: Cliente) {
-    const nuevoEstado = cliente.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    const clienteActualizado = { ...cliente, estado: nuevoEstado };
-    
-    if (cliente.id) {
-      this.clientesService.updateCliente(cliente.id, clienteActualizado).subscribe({
-        next: () => {
-          this.cargarClientes();
-        },
-        error: (error) => {
-          console.error('Error actualizando cliente:', error);
-        }
-      });
-    }
-  }
-
-  getEstadoBadge(estado: string = 'ACTIVO'): string {
-    return estado === 'ACTIVO' ? 'bg-success' : 'bg-secondary';
   }
 
   volverAlMenu() {

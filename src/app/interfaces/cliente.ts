@@ -6,5 +6,4 @@ export interface Cliente {
   telefono?: string;
   direccion?: string;
   fechaRegistro?: string;
-  estado?: string;
 }
