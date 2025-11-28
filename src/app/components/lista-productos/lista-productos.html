@@ -205,37 +205,39 @@
         </table>
       </div>
     </div>
-
-    <!-- Footer con estadísticas -->
-    <div *ngIf="!isLoading && productosFiltrados.length > 0" class="card-footer bg-light">
-      <div class="row text-center">
-        <div class="col-md-3">
-          <small class="text-muted">Activos: 
-            <span class="fw-bold text-success">
-              {{ productosActivos }}
-            </span>
-          </small>
-        </div>
-        <div class="col-md-3">
-          <small class="text-muted">Stock bajo: 
-            <span class="fw-bold text-warning">
-              {{ productosStockBajo }}
-            </span>
-          </small>
-        </div>
-        <div class="col-md-3">
-          <small class="text-muted">Sin stock: 
-            <span class="fw-bold text-danger">
-              {{ productosSinStock }}
-            </span>
-          </small>
-        </div>
-        <div class="col-md-3">
-          <small class="text-muted">Total valor: 
-            <span class="fw-bold text-primary">
-              S/ {{ calcularValorTotal().toFixed(2) }}
-            </span>
-          </small>
+    
+    <div class="card-footer bg-light position-sticky bottom-0">
+      <!-- footer con estadísticas -->
+      <div *ngIf="!isLoading && productosFiltrados.length > 0" class="card-footer bg-light">
+        <div class="row text-center">
+          <div class="col-md-3">
+            <small class="text-muted">Activos: 
+              <span class="fw-bold text-success">
+                {{ productosActivos }}
+              </span>
+            </small>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted">Stock bajo: 
+              <span class="fw-bold text-warning">
+                {{ productosStockBajo }}
+              </span>
+            </small>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted">Sin stock: 
+              <span class="fw-bold text-danger">
+                {{ productosSinStock }}
+              </span>
+            </small>
+          </div>
+          <div class="col-md-3">
+            <small class="text-muted">Total valor: 
+              <span class="fw-bold text-primary">
+                S/ {{ calcularValorTotal().toFixed(2) }}
+              </span>
+            </small>
+          </div>
         </div>
       </div>
     </div>

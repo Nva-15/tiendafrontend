@@ -151,22 +151,24 @@
       </div>
     </div>
 
-    <!-- Footer con estadísticas -->
-    <div *ngIf="!isLoading && categoriasFiltradas.length > 0" class="card-footer bg-light">
-      <div class="row text-center">
-        <div class="col-md-6">
-          <small class="text-muted">Activas: 
-            <span class="fw-bold text-success">
-              {{ categoriasActivas }}
-            </span>
-          </small>
-        </div>
-        <div class="col-md-6">
-          <small class="text-muted">Inactivas: 
-            <span class="fw-bold text-secondary">
-              {{ categoriasInactivas }}
-            </span>
-          </small>
+    <div class="card-footer bg-light position-sticky bottom-0">
+      <!-- Footer con estadísticas -->
+      <div *ngIf="!isLoading && categoriasFiltradas.length > 0" class="card-footer bg-light">
+        <div class="row text-center">
+          <div class="col-md-6">
+            <small class="text-muted">Activas: 
+              <span class="fw-bold text-success">
+                {{ categoriasActivas }}
+              </span>
+            </small>
+          </div>
+          <div class="col-md-6">
+            <small class="text-muted">Inactivas: 
+              <span class="fw-bold text-secondary">
+                {{ categoriasInactivas }}
+              </span>
+            </small>
+          </div>
         </div>
       </div>
     </div>

@@ -163,16 +163,17 @@
         </table>
       </div>
     </div>
-
-    <!-- Footer con estadísticas -->
-    <div *ngIf="!isLoading && clientesFiltrados.length > 0" class="card-footer bg-light">
-      <div class="row text-center">
-        <div class="col-12">
-          <small class="text-muted">Total de clientes: 
-            <span class="fw-bold text-primary">
-              {{ clientesFiltrados.length }}
-            </span>
-          </small>
+    <div class="card-footer bg-light position-sticky bottom-0">
+      <!-- Footer con estadísticas -->
+      <div *ngIf="!isLoading && clientesFiltrados.length > 0" class="card-footer bg-light">
+        <div class="row text-center">
+          <div class="col-12">
+            <small class="text-muted">Total de clientes: 
+              <span class="fw-bold text-primary">
+                {{ clientesFiltrados.length }}
+              </span>
+            </small>
+          </div>
         </div>
       </div>
     </div>

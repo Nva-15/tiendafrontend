@@ -217,41 +217,43 @@
       </div>
     </div>
 
-    <!-- Footer con estadísticas -->
-    <div *ngIf="!isLoading && ventasFiltradas.length > 0" class="card-footer bg-light">
-      <div class="row text-center">
-        <div class="col-md-3 border-end">
-          <div class="d-flex flex-column">
-            <small class="text-muted">Total Ventas</small>
-            <span class="fw-bold text-primary fs-5">{{ ventasFiltradas.length }}</span>
+    <div class="card-footer bg-light position-sticky bottom-0">
+      <!-- Footer con estadísticas -->
+      <div *ngIf="!isLoading && ventasFiltradas.length > 0" class="card-footer bg-light">
+        <div class="row text-center">
+          <div class="col-md-3 border-end">
+            <div class="d-flex flex-column">
+              <small class="text-muted">Total Ventas</small>
+              <span class="fw-bold text-primary fs-5">{{ ventasFiltradas.length }}</span>
+            </div>
           </div>
-        </div>
-        <div class="col-md-3 border-end">
-          <div class="d-flex flex-column">
-            <small class="text-muted">Completadas</small>
-            <span class="fw-bold text-success fs-5">{{ ventasCompletadas }}</span>
+          <div class="col-md-3 border-end">
+            <div class="d-flex flex-column">
+              <small class="text-muted">Completadas</small>
+              <span class="fw-bold text-success fs-5">{{ ventasCompletadas }}</span>
+            </div>
           </div>
-        </div>
-        <div class="col-md-3 border-end">
-          <div class="d-flex flex-column">
-            <small class="text-muted">Canceladas</small>
-            <span class="fw-bold text-danger fs-5">{{ ventasCanceladas }}</span>
+          <div class="col-md-3 border-end">
+            <div class="d-flex flex-column">
+              <small class="text-muted">Canceladas</small>
+              <span class="fw-bold text-danger fs-5">{{ ventasCanceladas }}</span>
+            </div>
           </div>
-        </div>
-        <div class="col-md-3">
-          <div class="d-flex flex-column">
-            <small class="text-muted">Total General</small>
-            <span class="fw-bold text-success fs-5">
-              S/ {{ calcularTotalGeneral().toFixed(2) }}
-            </span>
+          <div class="col-md-3">
+            <div class="d-flex flex-column">
+              <small class="text-muted">Total General</small>
+              <span class="fw-bold text-success fs-5">
+                S/ {{ calcularTotalGeneral().toFixed(2) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </div> 
   </div>
 </div>
 
-<!-- Modal para ver detalle de venta - ACTUALIZADO CON IGV -->
+<!-- Modal para ver detalle de venta con IGV -->
 <div class="modal fade" #detalleVentaModal id="detalleVentaModal" tabindex="-1" aria-labelledby="detalleVentaModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -348,7 +350,7 @@
                 <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
                 <td class="text-end"><strong>S/ {{ (ventaSeleccionada?.subtotal || 0) | number:'1.2-2' }}</strong></td>
               </tr>
-              <!-- IGV - NUEVO CAMPO AGREGADO -->
+              <!-- IGV -->
               <tr>
                 <td colspan="4" class="text-end"><strong>IGV (18%):</strong></td>
                 <td class="text-end"><strong>S/ {{ (ventaSeleccionada?.igv || 0) | number:'1.2-2' }}</strong></td>
