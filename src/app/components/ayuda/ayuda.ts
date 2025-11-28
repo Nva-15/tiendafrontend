@@ -55,6 +55,7 @@ export class AyudaComponent implements OnInit {
             texto: '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.'
           };
           this.contactoForm.reset();
+          this.limpiarEstadosValidacion();
         },
         error: (error) => {
           this.isLoading = false;
@@ -70,11 +71,35 @@ export class AyudaComponent implements OnInit {
     }
   }
 
+  //  Limpiar formulario al cancelar
+  limpiarFormulario() {
+    this.contactoForm.reset();
+    this.limpiarEstadosValidacion();
+    this.mensajeResultado = null;
+    console.log('Formulario limpiado');
+  }
+
+  //Limpiar estados de validación
+  limpiarEstadosValidacion() {
+    Object.keys(this.contactoForm.controls).forEach(key => {
+      const control = this.contactoForm.get(key);
+      control?.markAsUntouched();
+      control?.markAsPristine();
+      control?.setErrors(null);
+    });
+  }
+
   marcarCamposComoTouched() {
     Object.keys(this.contactoForm.controls).forEach(key => {
       const control = this.contactoForm.get(key);
       control?.markAsTouched();
     });
+  }
+
+  // Volver al menú ahora limpia el formulario primero
+  volverAlMenu() {
+    this.limpiarFormulario();
+    this.router.navigate(['/dashboard']);
   }
 
   get nombre() { return this.contactoForm.get('nombre'); }
@@ -102,9 +127,5 @@ export class AyudaComponent implements OnInit {
     }
     
     return '';
-  }
-
-  volverAlMenu() {
-    this.router.navigate(['/dashboard']);
   }
 }
