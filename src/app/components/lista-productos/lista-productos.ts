@@ -211,8 +211,4 @@ export class ListaProductosComponent implements OnInit {
     }, 0);
   }
 
-  // Método para volver al menú principal
-  volverAlMenu() {
-    this.router.navigate(['/dashboard']);
-  }
 }

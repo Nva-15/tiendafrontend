@@ -13,6 +13,7 @@ import { ListaVentasComponent } from './components/lista-ventas/lista-ventas';
 import { FormVentaComponent } from './components/form-venta/form-venta';
 import { ListaClientesComponent } from './components/lista-clientes/lista-clientes';
 import { FormClienteComponent } from './components/form-cliente/form-cliente';
+import { MainLayoutComponent } from './layouts/main-layout/main-layout';
 
 export const routes: Routes = [
   { 
@@ -23,101 +24,92 @@ export const routes: Routes = [
   { 
     path: 'dashboard', 
     component: DashboardComponent, 
-    title: 'Dashboard',
-    canActivate: [authGuard]
+    title: 'Dashboard'
   },
-  { 
-    path: 'productos', 
-    component: ListaProductosComponent, 
-    title: 'Productos',
-    canActivate: [authGuard]
-  },
-  { 
-    path: 'productos/nuevo', 
-    component: FormProductoComponent, 
-    title: 'Nuevo Producto',
-    canActivate: [authGuard]
-  },
-  { 
-    path: 'productos/editar/:id', 
-    component: FormProductoComponent, 
-    title: 'Editar Producto',
-    canActivate: [authGuard]
-  }, 
-  { 
-    path: 'usuarios', 
-    component: ListaUsuariosComponent,
+  {
+    path: '',
+    component: MainLayoutComponent,
     canActivate: [authGuard],
-    data: { roles: ['ADMIN'] }
-  },
-  { 
-    path: 'usuarios/nuevo', 
-    component: FormUsuarioComponent,
-    canActivate: [authGuard],
-    data: { roles: ['ADMIN'] }
-  },
-  { 
-    path: 'usuarios/editar/:id', 
-    component: FormUsuarioComponent,
-    canActivate: [authGuard],
-    data: { roles: ['ADMIN'] }
-  },
-  { 
-    path: 'categorias', 
-    component: ListaCategoriasComponent, 
-    title: 'Categorías',
-    canActivate: [authGuard]
-  },
-  { 
-    path: 'categorias/nuevo', 
-    component: FormCategoriaComponent, 
-    title: 'Nueva Categoría',
-    canActivate: [authGuard]
-  },
-  { 
-    path: 'categorias/editar/:id', 
-    component: FormCategoriaComponent, 
-    title: 'Editar Categoría',
-    canActivate: [authGuard]
-  },
-  { 
-    path: 'ventas', 
-    component: ListaVentasComponent, 
-    canActivate: [authGuard] 
-  },
-  { 
-    path: 'ventas/nueva', 
-    component: FormVentaComponent, 
-    canActivate: [authGuard] 
-  },
-  { 
-    path: 'clientes', 
-    component: ListaClientesComponent, 
-    title: 'Clientes',
-    canActivate: [authGuard]
-  },
-  { 
-    path: 'clientes/nuevo', 
-    component: FormClienteComponent, 
-    title: 'Nuevo Cliente',
-    canActivate: [authGuard]
-  },
-  { 
-    path: 'clientes/editar/:id', 
-    component: FormClienteComponent, 
-    title: 'Editar Cliente',
-    canActivate: [authGuard]
-  },
-  { 
-    path: 'ayuda', 
-    component: AyudaComponent, 
-    title: 'Ayuda y Soporte',
-    canActivate: [authGuard]
-  },
-  { 
-    path: '', 
-    redirectTo: '/login', 
-    pathMatch: 'full' 
+    children: [      
+      { 
+        path: 'productos', 
+        component: ListaProductosComponent, 
+        title: 'Productos'
+      },
+      { 
+        path: 'productos/nuevo', 
+        component: FormProductoComponent, 
+        title: 'Nuevo Producto'
+      },
+      { 
+        path: 'productos/editar/:id', 
+        component: FormProductoComponent, 
+        title: 'Editar Producto'
+      }, 
+      { 
+        path: 'usuarios', 
+        component: ListaUsuariosComponent,
+        data: { roles: ['ADMIN'] }
+      },
+      { 
+        path: 'usuarios/nuevo', 
+        component: FormUsuarioComponent,
+        data: { roles: ['ADMIN'] }
+      },
+      { 
+        path: 'usuarios/editar/:id', 
+        component: FormUsuarioComponent,
+        data: { roles: ['ADMIN'] }
+      },
+      { 
+        path: 'categorias', 
+        component: ListaCategoriasComponent, 
+        title: 'Categorías'
+      },
+      { 
+        path: 'categorias/nuevo', 
+        component: FormCategoriaComponent, 
+        title: 'Nueva Categoría'
+      },
+      { 
+        path: 'categorias/editar/:id', 
+        component: FormCategoriaComponent, 
+        title: 'Editar Categoría'
+      },
+      { 
+        path: 'ventas', 
+        component: ListaVentasComponent
+      },
+      { 
+        path: 'ventas/nueva', 
+        component: FormVentaComponent
+      },
+      { 
+        path: 'clientes', 
+        component: ListaClientesComponent, 
+        title: 'Clientes'
+      },
+      { 
+        path: 'clientes/nuevo', 
+        component: FormClienteComponent, 
+        title: 'Nuevo Cliente'
+      },
+      { 
+        path: 'clientes/editar/:id', 
+        component: FormClienteComponent, 
+        title: 'Editar Cliente'
+      },
+      { 
+        path: 'ayuda', 
+        component: AyudaComponent, 
+        title: 'Ayuda y Soporte'
+      },
+      { 
+        path: '', 
+        redirectTo: 'dashboard', 
+        pathMatch: 'full' 
+      }
+    ]
   },
   { 
     path: '**', 
