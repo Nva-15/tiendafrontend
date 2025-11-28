@@ -34,6 +34,11 @@ export class FormVentaComponent implements OnInit {
   mostrarFormCliente = false;
   clienteExistente: Cliente | null = null;
 
+  // Variables para el toast
+  showToast = false;
+  ventaTotalToast = 0;
+  toastMessage = '';
+
   // Datos para los selectores
   categorias: Categoria[] = [];
   productos: Producto[] = [];
@@ -192,6 +197,25 @@ export class FormVentaComponent implements OnInit {
       tipoPago: nuevoMetodo
     });
     console.log('Método de pago actualizado:', nuevoMetodo);
+  }
+
+  // MÉTODO PARA MOSTRAR TOAST EXITOSO
+  mostrarToastExitoso(total: number) {
+    this.ventaTotalToast = total;
+    this.toastMessage = `¡Venta Exitosa! Total: S/. ${total.toFixed(2)}`;
+    this.showToast = true;
+    
+    // El toast se auto-cierra después de 4 segundos
+    setTimeout(() => {
+      this.cerrarToast();
+    }, 4000);
+  }
+
+  // MÉTODO PARA CERRAR EL TOAST MANUALMENTE
+  cerrarToast() {
+    this.showToast = false;
+    this.ventaTotalToast = 0;
+    this.toastMessage = '';
   }
 
   // MÉTODOS PARA INTERFAZ CON BOTONES +/-
@@ -427,7 +451,9 @@ export class FormVentaComponent implements OnInit {
       this.ventasService.createVenta(ventaData).subscribe({
         next: (ventaCreada) => {
           this.isLoading = false;
-          this.successMessage = `¡Venta exitosa! Total: S/. ${ventaCreada.total}`;
+          
+          // Mostrar toast de éxito
+          this.mostrarToastExitoso(ventaCreada.total);
           
           // Limpiar el formulario después de una venta exitosa
           this.limpiarFormulario();

@@ -6,7 +6,21 @@
     </h2>
   </div>
 
-  <!-- Mensajes -->
+  <!-- Mensaje Toast para Venta Exitosa -->
+  <div *ngIf="showToast" class="toast-venta-exitosa">
+    <div class="alert alert-success alert-dismissible fade show shadow-lg" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check-circle-fill me-3 fs-4"></i>
+        <div>
+          <strong class="d-block">¡Venta Exitosa!</strong>
+          <small class="d-block">Total: S/. {{ ventaTotalToast | number:'1.2-2' }}</small>
+        </div>
+      </div>
+      <button type="button" class="btn-close" (click)="cerrarToast()"></button>
+    </div>
+  </div>
+
+  <!-- Mensajes normales -->
   <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
     <i class="bi bi-exclamation-triangle me-2"></i>
     {{ errorMessage }}
