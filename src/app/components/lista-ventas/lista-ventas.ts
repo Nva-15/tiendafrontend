@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { VentasService } from '../../services/ventas';
 import { Venta } from '../../interfaces/venta';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 declare var bootstrap: any;
 
@@ -80,8 +83,7 @@ export class ListaVentasComponent implements OnInit {
     this.isLoading = true;
     this.ventasService.getVentas().subscribe({
       next: (ventas) => {
-        console.log('Ventas cargadas:', ventas); // DEBUG
-        // Ordenar ventas por ID de forma descendente (más recientes primero)
+        console.log('Ventas cargadas:', ventas);
         this.ventas = ventas.sort((a, b) => (b.id || 0) - (a.id || 0));
         this.aplicarFiltros();
         this.calcularEstadisticas();
@@ -214,7 +216,7 @@ export class ListaVentasComponent implements OnInit {
   }
 
   verDetalle(venta: Venta) {
-    console.log('Venta seleccionada:', venta); // DEBUG
+    console.log('Venta seleccionada:', venta);
     this.ventaSeleccionada = venta;
     const modalElement = this.detalleVentaModal.nativeElement;
     const modal = new bootstrap.Modal(modalElement);
@@ -275,5 +277,97 @@ export class ListaVentasComponent implements OnInit {
 
   volverAlMenu() {
     this.router.navigate(['/dashboard']);
+  }
+
+  // Exportar a Excel
+
+  exportarExcel(): void {
+    if (this.ventasFiltradas.length === 0) {
+      alert('No hay datos para exportar');
+      return;
+    }
+
+    try {
+      const datos = this.ventasFiltradas.map(venta => ({
+        'ID Venta': venta.id || '',
+        'Fecha': venta.fecha ? new Date(venta.fecha).toLocaleDateString() : '',
+        'Hora': venta.fecha ? new Date(venta.fecha).toLocaleTimeString() : '',
+        'Cliente': venta.cliente?.nombre || 'N/A',
+        'DNI Cliente': venta.cliente?.dni || 'N/A',
+        'Vendedor': venta.usuario?.nombre || 'N/A',
+        'Total': venta.total || 0,
+        'Subtotal': venta.subtotal || 0,
+        'IGV': venta.igv || 0,
+        'Método Pago': venta.tipoPago || 'N/A',
+        'Estado': venta.estado || 'N/A'
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(datos);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte_Ventas');
+
+      const fecha = new Date().toISOString().split('T')[0];
+      const nombreArchivo = `Reporte_Ventas_${fecha}.xlsx`;
+
+      XLSX.writeFile(workbook, nombreArchivo);
+    } catch (error) {
+      console.error('Error al exportar Excel:', error);
+      alert('Error al exportar a Excel');
+    }
+  }
+
+  exportarPDF(): void {
+    if (this.ventasFiltradas.length === 0) {
+      alert('No hay datos para exportar');
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      
+      // Título
+      doc.setFontSize(16);
+      doc.text('REPORTE DE VENTAS', 105, 15, { align: 'center' });
+      
+      // Información del reporte
+      doc.setFontSize(10);
+      doc.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 14, 25);
+      doc.text(`Total de ventas: ${this.ventasFiltradas.length}`, 14, 32);
+      doc.text(`Período: ${this.filtroFechaDesde} al ${this.filtroFechaHasta}`, 14, 39);
+      
+      // Preparar datos de la tabla
+      const tableData = this.ventasFiltradas.map(venta => [
+        venta.id?.toString() || '',
+        venta.fecha ? new Date(venta.fecha).toLocaleDateString() : '',
+        venta.cliente?.nombre || 'N/A',
+        venta.cliente?.dni || 'N/A',
+        `S/ ${(venta.total || 0).toFixed(2)}`,
+        venta.tipoPago || 'N/A',
+        venta.estado || 'N/A'
+      ]);
+
+      // Crear tabla
+      autoTable(doc, {
+        head: [['ID', 'Fecha', 'Cliente', 'DNI', 'Total', 'Pago', 'Estado']],
+        body: tableData,
+        startY: 45,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185] }
+      });
+
+      // Estadísticas al final
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(10);
+      doc.text(`Ventas Completadas: ${this.ventasCompletadas}`, 14, finalY);
+      doc.text(`Ventas Canceladas: ${this.ventasCanceladas}`, 14, finalY + 7);
+      doc.text(`Total General: S/ ${this.calcularTotalGeneral().toFixed(2)}`, 14, finalY + 14);
+
+      // Guardar PDF
+      const fecha = new Date().toISOString().split('T')[0];
+      doc.save(`Reporte_Ventas_${fecha}.pdf`);
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+      alert('Error al exportar a PDF');
+    }
   }
 }

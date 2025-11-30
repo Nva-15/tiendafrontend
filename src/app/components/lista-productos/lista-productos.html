@@ -91,9 +91,19 @@
         Lista de Productos
         <span class="badge bg-primary ms-2">{{ productosFiltrados.length }}</span>
       </h5>
-      <button class="btn btn-sm btn-outline-primary" (click)="cargarProductos()">
-        <i class="bi bi-arrow-clockwise"></i>
-      </button>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-primary" (click)="cargarProductos()">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-success" (click)="exportarExcel()" title="Exportar a Excel">
+            <i class="bi bi-file-earmark-excel me-1"></i>Excel
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="exportarPDF()" title="Exportar a PDF">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+          </button>
+        </div>
+      </div>
     </div>
     
     <div class="card-body p-0">

@@ -6,6 +6,9 @@ import { ProductosService } from '../../services/productos';
 import { CategoriasService } from '../../services/categorias';
 import { Producto } from '../../interfaces/producto';
 import { Categoria } from '../../interfaces/categoria';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 @Component({
   selector: 'app-lista-productos',
@@ -211,4 +214,100 @@ export class ListaProductosComponent implements OnInit {
     }, 0);
   }
 
+  // ==================== EXPORTACIÓN ====================
+
+  exportarExcel(): void {
+    if (this.productosFiltrados.length === 0) {
+      alert('No hay datos para exportar');
+      return;
+    }
+
+    try {
+      const datos = this.productosFiltrados.map(producto => ({
+        'Producto': producto.nombre || '',
+        'Descripción': producto.descripcion || 'Sin descripción',
+        'Categoría': this.getNombreCategoria(producto.categoriaId),
+        'Precio Compra': producto.precioCompra || 0,
+        'Precio Venta': producto.precioVenta || 0,
+        'Stock Actual': producto.cantidad || 0,
+        'Stock Mínimo': producto.stockMinimo || 10,
+        'Unidad': producto.unidad || 'UNIDAD',
+        'Estado': producto.estado || '',
+        'Valor Inventario': ((producto.precioCompra || 0) * (producto.cantidad || 0))
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(datos);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte_Stock');
+
+      const fecha = new Date().toISOString().split('T')[0];
+      const nombreArchivo = `Reporte_Stock_${fecha}.xlsx`;
+
+      XLSX.writeFile(workbook, nombreArchivo);
+    } catch (error) {
+      console.error('Error al exportar Excel:', error);
+      alert('Error al exportar a Excel');
+    }
+  }
+
+  exportarPDF(): void {
+    if (this.productosFiltrados.length === 0) {
+      alert('No hay datos para exportar');
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      
+      // Título
+      doc.setFontSize(16);
+      doc.text('REPORTE DE STOCK DE PRODUCTOS', 105, 15, { align: 'center' });
+      
+      // Información del reporte
+      doc.setFontSize(10);
+      doc.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 14, 25);
+      doc.text(`Total de productos: ${this.productosFiltrados.length}`, 14, 32);
+      doc.text(`Productos activos: ${this.productosActivos}`, 14, 39);
+      doc.text(`Productos con stock bajo: ${this.productosStockBajo}`, 14, 46);
+      
+      // Preparar datos de la tabla
+      const tableData = this.productosFiltrados.map(producto => [
+        producto.nombre || '',
+        this.getNombreCategoria(producto.categoriaId),
+        (producto.cantidad || 0).toString(),
+        (producto.stockMinimo || 10).toString(),
+        `S/ ${(producto.precioCompra || 0).toFixed(2)}`,
+        `S/ ${(producto.precioVenta || 0).toFixed(2)}`,
+        producto.estado || ''
+      ]);
+
+      // Crear tabla
+      autoTable(doc, {
+        head: [['Producto', 'Categoría', 'Stock', 'Stock Mín', 'P. Compra', 'P. Venta', 'Estado']],
+        body: tableData,
+        startY: 55,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185] },
+        columnStyles: {
+          2: { cellWidth: 20 },
+          3: { cellWidth: 20 },
+          4: { cellWidth: 25 },
+          5: { cellWidth: 25 }
+        }
+      });
+
+      // Estadísticas al final
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(10);
+      doc.text(`Valor total del inventario: S/ ${this.calcularValorTotal().toFixed(2)}`, 14, finalY);
+      doc.text(`Productos sin stock: ${this.productosSinStock}`, 14, finalY + 7);
+
+      // Guardar PDF
+      const fecha = new Date().toISOString().split('T')[0];
+      doc.save(`Reporte_Stock_${fecha}.pdf`);
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+      alert('Error al exportar a PDF');
+    }
+  }
 }
