@@ -27,11 +27,11 @@ export class FormClienteComponent implements OnInit {
 
   constructor() {
     this.clienteForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.minLength(2)]],
+      nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       dni: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(8), Validators.pattern('^[0-9]*$')]],
-      correo: ['', [Validators.email]],
+      correo: ['', [Validators.email, Validators.maxLength(100)]],
       telefono: ['', [Validators.pattern('^[0-9]*$'), Validators.minLength(9), Validators.maxLength(9)]],
-      direccion: ['']
+      direccion: ['', ]
     });
   }
 
@@ -66,6 +66,33 @@ export class FormClienteComponent implements OnInit {
       return;
     }
 
+    // VALIDACIÓN MANUAL DE LONGITUDES
+    const nombre = this.clienteForm.get('nombre')?.value;
+    const dni = this.clienteForm.get('dni')?.value;
+    const correo = this.clienteForm.get('correo')?.value;
+    const telefono = this.clienteForm.get('telefono')?.value;
+    const direccion = this.clienteForm.get('direccion')?.value;
+
+    if (nombre && nombre.length > 100) {
+      this.errorMessage = 'El nombre del cliente no puede exceder los 100 caracteres';
+      return;
+    }
+
+    if (correo && correo.length > 100) {
+      this.errorMessage = 'El correo electrónico no puede exceder los 100 caracteres';
+      return;
+    }
+
+    if (telefono && telefono.length > 9) {
+      this.errorMessage = 'El teléfono no puede exceder los 9 dígitos';
+      return;
+    }
+
+    if (direccion && direccion.length > 150) {
+      this.errorMessage = 'La dirección no puede exceder los 150 caracteres';
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -81,7 +108,7 @@ export class FormClienteComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error actualizando cliente:', error);
-          this.errorMessage = 'Error al actualizar el cliente';
+          this.errorMessage = error.error?.error || 'Error al actualizar el cliente';
           this.isLoading = false;
         }
       });
@@ -94,7 +121,7 @@ export class FormClienteComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error creando cliente:', error);
-          this.errorMessage = 'Error al crear el cliente';
+          this.errorMessage = error.error?.error || 'Error al crear el cliente';
           this.isLoading = false;
         }
       });

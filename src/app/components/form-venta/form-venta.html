@@ -168,9 +168,14 @@
                   <textarea
                     class="form-control"
                     formControlName="clienteDireccion"
+                    [class.is-invalid]="clienteDireccion?.invalid && clienteDireccion?.touched"
                     [readonly]="!!clienteExistente"
                     rows="2"
-                    placeholder="Dirección del cliente"></textarea>
+                    placeholder="Dirección del cliente">
+                  </textarea>
+                  <div class="form-text">
+                    Ingrese la dirección del cliente (máximo 150 caracteres permitidos)
+                  </div>
                 </div>
               </div>
             </form>
@@ -312,8 +317,8 @@
           <!-- Totales -->
           <div class="mb-3">
             <div class="d-flex justify-content-between mb-2">
-              <span>Subtotal:</span>
-              <strong>S/. {{ getTotalVenta() | number:'1.2-2' }}</strong>
+              <span>Subtotal :</span>
+              <strong>S/. {{ getSubtotalSinIgv() | number:'1.2-2' }}</strong>
             </div>
             
             <div class="d-flex justify-content-between mb-2">
@@ -324,7 +329,7 @@
             <hr>
             
             <div class="d-flex justify-content-between mb-3">
-              <span class="h5">Total:</span>
+              <span class="h5">Total (con IGV):</span>
               <strong class="h5 text-primary">S/. {{ getTotalConIGV() | number:'1.2-2' }}</strong>
             </div>
           </div>
@@ -376,8 +381,8 @@
               <i class="bi bi-exclamation-triangle me-1"></i>
               <strong>Para continuar:</strong>
               <ul class="mb-0 mt-1">
-                <li *ngIf="!clienteExistente && !mostrarFormCliente">• Busque un cliente por DNI</li>
-                <li *ngIf="detalles.length === 0">• Agregue al menos un producto</li>
+                <li *ngIf="!clienteExistente && !mostrarFormCliente"> Busque un cliente por DNI</li>
+                <li *ngIf="detalles.length === 0">Agregue al menos un producto</li>
               </ul>
             </div>
           </div>

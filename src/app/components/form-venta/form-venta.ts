@@ -34,35 +34,30 @@ export class FormVentaComponent implements OnInit {
   mostrarFormCliente = false;
   clienteExistente: Cliente | null = null;
 
-  // Variables para el toast
   showToast = false;
   ventaTotalToast = 0;
   toastMessage = '';
 
-  // Datos para los selectores
   categorias: Categoria[] = [];
   productos: Producto[] = [];
   productosFiltrados: Producto[] = [];
   tiposPago = ['EFECTIVO', 'TARJETA', 'YAPE', 'PLIN', 'TRANSFERENCIA'];
 
-  // Variable para DNI de búsqueda
   dniBusqueda: string = '';
 
-  // Map para productos seleccionados temporalmente
   productosSeleccionados: Map<number, number> = new Map();
 
-  // Variable para controlar el método de pago
   metodoPagoSeleccionado: string = 'EFECTIVO';
+
+  categoriaPorDefectoId: number = 4;
 
   constructor() {
     this.ventaForm = this.fb.group({
-      // Datos del cliente (para nuevo cliente)
-      clienteNombre: ['', Validators.required],
+      clienteNombre: ['', [Validators.required, Validators.maxLength(100)]],
       clienteDni: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(8)]],
-      clienteCorreo: ['', Validators.email],
+      clienteCorreo: ['', [Validators.email, Validators.maxLength(100)]],
       clienteTelefono: ['', [Validators.minLength(9), Validators.maxLength(9), Validators.pattern('^[0-9]*$')]],
-      clienteDireccion: [''],
-      // Información de venta
+      clienteDireccion: ['', Validators.required], 
       tipoPago: ['EFECTIVO', Validators.required],
       detalles: this.fb.array([], Validators.required)
     });
@@ -70,7 +65,6 @@ export class FormVentaComponent implements OnInit {
 
   ngOnInit() {
     this.cargarDatosIniciales();
-    // Forzar el valor por defecto
     this.ventaForm.patchValue({
       tipoPago: 'EFECTIVO'
     });
@@ -87,6 +81,7 @@ export class FormVentaComponent implements OnInit {
     this.categoriasService.getCategoriasActivas().subscribe({
       next: (categorias) => {
         this.categorias = categorias;
+        this.aplicarFiltroCategoriaPorDefecto();
       },
       error: (error) => {
         console.error('Error cargando categorías:', error);
@@ -97,7 +92,7 @@ export class FormVentaComponent implements OnInit {
     this.ventasService.getProductosActivos().subscribe({
       next: (productos) => {
         this.productos = productos;
-        this.productosFiltrados = productos;
+        this.aplicarFiltroCategoriaPorDefecto();
         this.isLoading = false;
       },
       error: (error) => {
@@ -106,6 +101,12 @@ export class FormVentaComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  aplicarFiltroCategoriaPorDefecto() {
+    if (this.productos.length > 0) {
+      this.productosFiltrados = this.productos.filter(p => p.categoriaId === this.categoriaPorDefectoId);
+    }
   }
 
   getUsuarioAutenticado(): any {
@@ -121,7 +122,6 @@ export class FormVentaComponent implements OnInit {
     return 0;
   }
 
-  // BUSCAR CLIENTE POR DNI
   buscarCliente() {
     if (!this.dniBusqueda || this.dniBusqueda.length !== 8) {
       this.errorMessage = 'Ingrese un DNI válido de 8 dígitos';
@@ -189,36 +189,30 @@ export class FormVentaComponent implements OnInit {
     this.metodoPagoSeleccionado = 'EFECTIVO';
   }
 
-  // ACTUALIZAR MÉTODO DE PAGO
   actualizarMetodoPago(event: any) {
     const nuevoMetodo = event.target.value;
     this.metodoPagoSeleccionado = nuevoMetodo;
     this.ventaForm.patchValue({
       tipoPago: nuevoMetodo
     });
-    console.log('Método de pago actualizado:', nuevoMetodo);
   }
 
-  // MÉTODO PARA MOSTRAR TOAST EXITOSO
   mostrarToastExitoso(total: number) {
     this.ventaTotalToast = total;
     this.toastMessage = `¡Venta Exitosa! Total: S/. ${total.toFixed(2)}`;
     this.showToast = true;
     
-    // El toast se auto-cierra después de 4 segundos
     setTimeout(() => {
       this.cerrarToast();
     }, 4000);
   }
 
-  // MÉTODO PARA CERRAR EL TOAST MANUALMENTE
   cerrarToast() {
     this.showToast = false;
     this.ventaTotalToast = 0;
     this.toastMessage = '';
   }
 
-  // MÉTODOS PARA INTERFAZ CON BOTONES +/-
   getCategoriaNombre(categoriaId: number): string {
     const categoria = this.categorias.find(c => c.id === categoriaId);
     return categoria ? categoria.nombre : 'Sin categoría';
@@ -241,7 +235,7 @@ export class FormVentaComponent implements OnInit {
         p.nombre.toLowerCase().includes(termino)
       );
     } else {
-      this.productosFiltrados = this.productos;
+      this.aplicarFiltroCategoriaPorDefecto();
     }
   }
 
@@ -308,7 +302,6 @@ export class FormVentaComponent implements OnInit {
     }
   }
 
-  // MÉTODOS PARA CALCULAR Y MANEJAR DETALLES
   calcularSubtotal(detalleForm: FormGroup) {
     const cantidad = detalleForm.get('cantidad')?.value || 0;
     const precio = detalleForm.get('precioUnitario')?.value || 0;
@@ -325,6 +318,20 @@ export class FormVentaComponent implements OnInit {
     return this.detalles.controls.reduce((total, detalle) => {
       return total + (detalle.get('subtotal')?.value || 0);
     }, 0);
+  }
+
+  getSubtotalSinIgv(): number {
+    const totalConIgv = this.getTotalVenta();
+    return totalConIgv / 1.18;
+  }
+
+  getIGV(): number {
+    const totalConIgv = this.getTotalVenta();
+    return totalConIgv - (totalConIgv / 1.18);
+  }
+
+  getTotalConIGV(): number {
+    return this.getTotalVenta();
   }
 
   getProductoNombre(productoId: any): string {
@@ -412,6 +419,44 @@ export class FormVentaComponent implements OnInit {
       return;
     }
 
+    // Validar campos del cliente antes de enviar
+    if (this.mostrarFormCliente) {
+      const nombre = this.ventaForm.get('clienteNombre')?.value;
+      const dni = this.ventaForm.get('clienteDni')?.value;
+      const correo = this.ventaForm.get('clienteCorreo')?.value;
+      const telefono = this.ventaForm.get('clienteTelefono')?.value;
+      const direccion = this.ventaForm.get('clienteDireccion')?.value;
+
+      if (!nombre || nombre.trim().length === 0) {
+        this.errorMessage = 'El nombre del cliente es requerido';
+        return;
+      }
+
+      if (nombre.length > 100) {
+        this.errorMessage = 'El nombre del cliente no puede exceder los 100 caracteres';
+        return;
+      }
+
+      if (!dni || dni.length !== 8) {
+        this.errorMessage = 'El DNI debe tener exactamente 8 dígitos';
+        return;
+      }
+
+      if (correo && correo.length > 100) {
+        this.errorMessage = 'El correo electrónico no puede exceder los 100 caracteres';
+        return;
+      }
+
+      if (telefono && telefono.length > 9) {
+        this.errorMessage = 'El teléfono no puede exceder los 9 dígitos';
+        return;
+      }
+      if (direccion && direccion.length > 150) {
+        this.errorMessage = 'La dirección no puede exceder los 150 caracteres';
+        return;
+      }
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -423,11 +468,11 @@ export class FormVentaComponent implements OnInit {
         clienteId = this.clienteExistente.id!;
       } else {
         const nuevoCliente: Cliente = {
-          nombre: this.ventaForm.get('clienteNombre')?.value,
+          nombre: this.ventaForm.get('clienteNombre')?.value.trim(),
           dni: this.ventaForm.get('clienteDni')?.value,
-          correo: this.ventaForm.get('clienteCorreo')?.value || undefined,
-          telefono: this.ventaForm.get('clienteTelefono')?.value || undefined,
-          direccion: this.ventaForm.get('clienteDireccion')?.value || undefined
+          correo: this.ventaForm.get('clienteCorreo')?.value?.trim() || undefined,
+          telefono: this.ventaForm.get('clienteTelefono')?.value?.trim() || undefined,
+          direccion: this.ventaForm.get('clienteDireccion')?.value?.trim() || undefined
         };
 
         const clienteCreado = await this.clientesService.createCliente(nuevoCliente).toPromise();
@@ -451,54 +496,68 @@ export class FormVentaComponent implements OnInit {
       this.ventasService.createVenta(ventaData).subscribe({
         next: (ventaCreada) => {
           this.isLoading = false;
-          
-          // Mostrar toast de éxito
           this.mostrarToastExitoso(ventaCreada.total);
-          
-          // Limpiar el formulario después de una venta exitosa
           this.limpiarFormulario();
-          
-          // Recargar productos para actualizar stocks
           this.cargarProductos();
         },
         error: (error) => {
           console.error('Error creando venta:', error);
-          this.errorMessage = error.error?.error || 'Error al crear la venta';
+          
+          if (error.error && error.error.error) {
+            const errorMessage = error.error.error;
+            
+            if (errorMessage.includes('dirección no puede exceder')) {
+              this.errorMessage = 'Error en la dirección: ' + errorMessage;
+            } else if (errorMessage.includes('nombre no puede exceder')) {
+              this.errorMessage = 'Error en el nombre: ' + errorMessage;
+            } else if (errorMessage.includes('correo electrónico')) {
+              this.errorMessage = 'Error en el correo: ' + errorMessage;
+            } else if (errorMessage.includes('teléfono no puede exceder')) {
+              this.errorMessage = 'Error en el teléfono: ' + errorMessage;
+            } else if (errorMessage.includes('Stock insuficiente')) {
+              this.errorMessage = errorMessage;
+            } else if (errorMessage.includes('Ya existe un cliente')) {
+              this.errorMessage = errorMessage + '. Por favor, busque el cliente existente.';
+            } else {
+              this.errorMessage = errorMessage;
+            }
+          } else {
+            this.errorMessage = 'Error al crear la venta. Por favor, verifique los datos e intente nuevamente.';
+          }
+          
           this.isLoading = false;
         }
       });
 
     } catch (error: any) {
       console.error('Error procesando venta:', error);
-      this.errorMessage = error.message || 'Error al procesar la venta';
+      
+      if (error.message && error.message.includes('exceder')) {
+        this.errorMessage = error.message;
+      } else {
+        this.errorMessage = error.message || 'Error al procesar la venta';
+      }
+      
       this.isLoading = false;
     }
   }
 
-  // MÉTODO PARA LIMPIAR EL FORMULARIO DESPUÉS DE VENTA EXITOSA
   limpiarFormulario() {
-    // Limpiar detalles de venta
     this.detalles.clear();
-    
-    // Limpiar productos seleccionados temporalmente
     this.productosSeleccionados.clear();
-    
-    // Limpiar búsqueda de cliente
     this.limpiarBusquedaCliente();
-    
-    // Resetear método de pago al valor por defecto
     this.metodoPagoSeleccionado = 'EFECTIVO';
     this.ventaForm.patchValue({
       tipoPago: 'EFECTIVO'
     });
+    this.aplicarFiltroCategoriaPorDefecto();
   }
 
-  // MÉTODO PARA RECARGAR PRODUCTOS Y ACTUALIZAR STOCKS
   cargarProductos() {
     this.ventasService.getProductosActivos().subscribe({
       next: (productos) => {
         this.productos = productos;
-        this.productosFiltrados = productos;
+        this.aplicarFiltroCategoriaPorDefecto();
       },
       error: (error) => {
         console.error('Error recargando productos:', error);
@@ -521,15 +580,6 @@ export class FormVentaComponent implements OnInit {
     return this.ventaForm.get('clienteDni')?.value || 'No especificado';
   }
 
-  getIGV(): number {
-    return this.getTotalVenta() * 0.18;
-  }
-
-  getTotalConIGV(): number {
-    return this.getTotalVenta() + this.getIGV();
-  }
-
-  // GETTERS PARA CONTROLES (corregidos con aserción de tipo seguro)
   get tipoPago(): AbstractControl | null { return this.ventaForm.get('tipoPago'); }
   get clienteNombre(): AbstractControl | null { return this.ventaForm.get('clienteNombre'); }
   get clienteDni(): AbstractControl | null { return this.ventaForm.get('clienteDni'); }
